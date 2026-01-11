@@ -105,12 +105,6 @@ namespace Bloodthirst.Core.UI
         }
 #endif
 
-        private void Update()
-        {
-            this.SetVerticesDirty();
-            this.SetMaterialDirty();
-        }
-
         private void InitPoints()
         {
             if (points.Count < 4)
@@ -189,6 +183,13 @@ namespace Bloodthirst.Core.UI
 
             // calculate
             LineUtils.PointsToCurve(cachedInterpolatedPoints, settings, out float lineLength, ref pooledVerts, ref pooledIndices);
+
+            for (int i = 0; i < pooledVerts.Count; i++)
+            {
+                UIVertex v = pooledVerts[i];
+                v.color = color;
+                pooledVerts[i] = v;           
+            }
 
             materialForRendering.SetFloat(LineLengthID, lineLength);
             materialForRendering.SetFloat(LineThicknessID, lineThickness);

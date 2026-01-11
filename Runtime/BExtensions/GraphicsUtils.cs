@@ -1,11 +1,14 @@
-﻿using Bloodthirst.Scripts.Utils;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Pool;
+using UnityEngine.Rendering;
+
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace Bloodthirst.Core.Utils
 {
@@ -27,11 +30,255 @@ namespace Bloodthirst.Core.Utils
         public int e2;
     }
 
+    public sealed class TextureIsland
+    {
+        public Vector2Int[] pixelCoordsArray;
+        public RectInt bounds;
+        public Vector2Int textureSize;
+    }
+
+
+    public sealed class RasterizedIsland
+    {
+        public struct Segment
+        {
+            public int x;
+            public int width;
+        }
+
+        public Segment[][] segmentsInRow;
+        public Rect bounds;
+        public Vector2Int textureSize;
+    }
+
+    public sealed class ScaledRasterizedIsland
+    {
+        public struct Segment
+        {
+            public float x;
+            public float width;
+        }
+
+        public Rect bounds;
+        public Segment[][] segmentsPerRow;
+    }
+
     /// <summary>
     /// an extension class containing helper methods for types / reflection
     /// </summary>
     public static class GraphicsUtils
     {
+        public static ScaledRasterizedIsland ScaleTextureIsland(RasterizedIsland island, Rect targetSpace)
+        {
+            Vector2Int textureSize = island.textureSize;
+
+            Rect scaledRect = default;
+            scaledRect.x = MathUtils.Remap(island.bounds.x, 0, textureSize.x, targetSpace.xMin, targetSpace.xMax);
+            scaledRect.y = MathUtils.Remap(island.bounds.y, 0, textureSize.y, targetSpace.yMin, targetSpace.yMax);
+            scaledRect.width = MathUtils.Remap(island.bounds.width, 0, textureSize.x, 0 , targetSpace.width);
+            scaledRect.height = MathUtils.Remap(island.bounds.height, 0, textureSize.y, 0, targetSpace.height);
+
+            ScaledRasterizedIsland.Segment[][] scaledRows = new ScaledRasterizedIsland.Segment[island.segmentsInRow.Length][];
+
+            for (int i = 0; i < island.segmentsInRow.Length; i++)
+            {
+                RasterizedIsland.Segment[] segments = island.segmentsInRow[i];
+                ScaledRasterizedIsland.Segment[] scaledSegements = new ScaledRasterizedIsland.Segment[segments.Length];
+
+                for (int segIdx = 0; segIdx < segments.Length; ++segIdx)
+                {
+                    RasterizedIsland.Segment currSeg = segments[segIdx];
+                    ScaledRasterizedIsland.Segment scaledSeg = new ScaledRasterizedIsland.Segment()
+                    {
+                        x = MathUtils.Remap(currSeg.x, 0, island.bounds.width, scaledRect.xMin, scaledRect.xMax),
+                        width = MathUtils.Remap(currSeg.width, 0, island.bounds.width, 0, scaledRect.width),
+                    };
+
+                    scaledSegements[segIdx] = scaledSeg;
+                }
+
+                scaledRows[i] = scaledSegements;
+            }
+
+            ScaledRasterizedIsland scaled = new ScaledRasterizedIsland()
+            {
+                bounds = scaledRect,
+                segmentsPerRow = scaledRows
+            };
+
+            return scaled;
+        }
+
+        public static RasterizedIsland RasterizeTextureIsland(TextureIsland island)
+        {
+            Rect rectf = new Rect(island.bounds.x, island.bounds.y, island.bounds.width, island.bounds.height);
+
+            RasterizedIsland rasterized = new RasterizedIsland()
+            {
+                textureSize = island.textureSize,
+                bounds = rectf,
+                segmentsInRow = new RasterizedIsland.Segment[island.bounds.height + 1][]
+            };
+
+            using (HashSetPool<Vector2Int>.Get(out var pixels))
+            using (HashSetPool<RasterizedIsland.Segment>.Get(out HashSet<RasterizedIsland.Segment> rows))
+            {
+                foreach (Vector2Int p in island.pixelCoordsArray)
+                {
+                    pixels.Add(p);
+                }
+
+                for (int y = island.bounds.yMin; y <= island.bounds.yMax; ++y)
+                {
+                    rows.Clear();
+                    int x = island.bounds.xMin;
+
+                    while (x <= island.bounds.xMax)
+                    {
+                        Vector2Int? start = null;
+
+                        while (x <= island.bounds.xMax)
+                        {
+                            Vector2Int p = new Vector2Int(x, y);
+
+                            if (!pixels.Contains(p))
+                            {
+                                x++;
+                                continue;
+                            }
+
+                            start = p;
+                            break;
+                        }
+
+                        if (!start.HasValue) { break; }
+
+                        Vector2Int? end = null;
+
+                        while (x <= island.bounds.xMax)
+                        {
+                            Vector2Int p = new Vector2Int(x, y);
+
+                            if (!pixels.Contains(p))
+                            {
+                                break;
+                            }
+
+                            x++;
+                        }
+
+                        end = new Vector2Int(x, y);
+
+                        var seg = new RasterizedIsland.Segment()
+                        {
+                            x = start.Value.x - island.bounds.xMin,
+                            width = end.Value.x - start.Value.x
+                        };
+
+                        rows.Add(seg);
+                    }
+
+                    int idx = y - island.bounds.yMin;
+                    rasterized.segmentsInRow[idx] = rows.ToArray();
+                }
+
+            }
+            return rasterized;
+        }
+
+        public static void GetIslandsFromTexture(Texture2D texture, List<TextureIsland> islands)
+        {
+            Vector2Int textureSize = new Vector2Int(texture.width, texture.height);
+
+            Stack<Vector2Int> currentStack = new Stack<Vector2Int>();
+
+            using (ListPool<Color>.Get(out List<Color> texColors))
+            using (ListPool<Vector2Int>.Get(out List<Vector2Int> freePoints))
+            using (HashSetPool<Vector2Int>.Get(out HashSet<Vector2Int> maskPoints))
+            using (HashSetPool<Vector2Int>.Get(out HashSet<Vector2Int> usedPoints))
+            {
+                texColors.Capacity = textureSize.x * textureSize.y;
+                freePoints.Capacity = textureSize.x * textureSize.y;
+
+                texColors.AddRange(texture.GetPixels());
+
+                for (int x = 0; x < textureSize.x; x++)
+                {
+                    for (int y = 0; y < textureSize.y; y++)
+                    {
+                        freePoints.Add(new Vector2Int(x, y));
+                    }
+                }
+
+                while(freePoints.Count != 0)
+                {
+                    // keep iterating over the points
+                    // until we find the first one that has a heatmap value
+                    {
+                        Vector2Int currPoint = freePoints[freePoints.Count - 1];
+                        freePoints.RemoveAt(freePoints.Count - 1);
+
+                        if (!usedPoints.Add(currPoint)) { continue; }
+
+                        int idx = currPoint.x + (textureSize.x * currPoint.y);
+                        Color val = texColors[idx];
+
+                        if (val.r <= 0.1f) { continue; }
+
+                        maskPoints.Clear();
+                        currentStack.Clear();
+                        currentStack.Push(currPoint);
+                    }
+
+                    // we keep iterating and exploring the neighbors that have a value
+                    // until we run out
+                    while(currentStack.Count != 0)
+                    {
+                        Vector2Int currPoint = currentStack.Pop();
+
+                        int idx = currPoint.x + (textureSize.x * currPoint.y);
+                        Color val = texColors[idx];
+
+                        if (val.r <= 0.1f) { continue; }
+
+                        maskPoints.Add(currPoint);
+
+                        Vector2Int t = currPoint + Vector2Int.up;
+                        Vector2Int b = currPoint + Vector2Int.down;
+                        Vector2Int l = currPoint + Vector2Int.left;
+                        Vector2Int r = currPoint + Vector2Int.right;
+
+                        bool tOOB = t.x < 0 || t.x > (textureSize.x - 1) || t.y < 0 || t.y > (textureSize.y - 1);
+                        bool bOOB = b.x < 0 || b.x > (textureSize.x - 1) || b.y < 0 || b.y > (textureSize.y - 1);
+                        bool lOOB = l.x < 0 || l.x > (textureSize.x - 1) || l.y < 0 || l.y > (textureSize.y - 1);
+                        bool rOOB = r.x < 0 || r.x > (textureSize.x - 1) || r.y < 0 || r.y > (textureSize.y - 1);
+
+                        if (!tOOB && usedPoints.Add(t)) { currentStack.Push(t); }
+                        if (!bOOB && usedPoints.Add(b)) { currentStack.Push(b); }
+                        if (!rOOB && usedPoints.Add(r)) { currentStack.Push(r); }
+                        if (!lOOB && usedPoints.Add(l)) { currentStack.Push(l); }
+                    }
+
+                    if(maskPoints.Count == 0) { continue; }
+
+                    Vector2Int[] maskPixels = maskPoints.ToArray();
+                    int minX = maskPixels.Min(p => p.x);
+                    int maxX = maskPixels.Max(p => p.x);
+                    int minY = maskPixels.Min(p => p.y);
+                    int maxY = maskPixels.Max(p => p.y);
+
+                    TextureIsland island = new TextureIsland()
+                    {
+                        pixelCoordsArray = maskPixels,
+                        bounds = new RectInt(minX, minY, maxX - minX, maxY - minY),
+                        textureSize = textureSize
+                    };
+
+                    islands.Add(island);
+                }
+            }
+        }
+
         public static TriangleIndicies AlignTriangleNormal(IReadOnlyList<Vector2> points, TriangleIndicies tri, Vector3 up)
         {
             Vector2 v1 = points[tri.v1];
@@ -51,6 +298,11 @@ namespace Bloodthirst.Core.Utils
             return corretTri;
         }
 
+        public static Rect CreateRect(Vector2 center, Vector2 size)
+        {
+            return new Rect(center - (size * 0.5f), size);
+        }
+
         private struct TriangleOutlinePairs
         {
             public TriangleIndicies tri;
@@ -65,7 +317,7 @@ namespace Bloodthirst.Core.Utils
         /// <param name="outlineEdges"></param>
         /// <param name="outlineMesh"></param>
         /// <param name="width"></param>
-        public static void GenerateOutlineMesh(IReadOnlyList<Vector2> points, IReadOnlyList<TriangleIndicies> triangles, IReadOnlyList<EdgeIndicies> outlineEdges, float width , List<Vector2> outlineVerts, List<int> outlineIndicies)
+        public static void GenerateOutlineMesh(IReadOnlyList<Vector2> points, IReadOnlyList<TriangleIndicies> triangles, IReadOnlyList<EdgeIndicies> outlineEdges, float width, List<Vector2> outlineVerts, List<int> outlineIndicies)
         {
             using (HashSetPool<Vector2>.Get(out HashSet<Vector2> dupCheck))
             {
@@ -164,6 +416,7 @@ namespace Bloodthirst.Core.Utils
                         outlineVec *= -1;
                     }
 
+#if UNITY_EDITOR
                     if (!Application.isPlaying)
                     {
                         Handles.color = Color.white;
@@ -171,7 +424,7 @@ namespace Bloodthirst.Core.Utils
                         Handles.color = Color.black;
                         Handles.ArrowHandleCap(-1, Vector3.Lerp(v1Pos, v2Pos, 0.5f), Quaternion.LookRotation(outlineVec, Vector3.forward), width, EventType.Repaint);
                     }
-
+#endif
                     edgeToNormal.Add(e, outlineVec);
                 }
 
@@ -195,12 +448,14 @@ namespace Bloodthirst.Core.Utils
                     indexToAvgNormal.Add(i, avgNormal);
 
 
+#if UNITY_EDITOR
                     if (!Application.isPlaying)
                     {
                         Vector2 p = points[i];
                         Handles.color = Color.cyan;
                         Handles.ArrowHandleCap(-1, p, Quaternion.LookRotation(avgNormal, Vector3.forward), 1, EventType.Repaint);
                     }
+#endif
                 }
 
                 float outlineWith = width;
@@ -221,13 +476,14 @@ namespace Bloodthirst.Core.Utils
                     Vector2 v3Pos = v1Pos + (e1AvgNormal / proj1 * outlineWith);
                     Vector2 v4Pos = v2Pos + (e2AvgNormal / proj2 * outlineWith);
 
+#if UNITY_EDITOR
                     if (!Application.isPlaying)
                     {
                         Handles.color = Color.yellow;
                         Handles.ArrowHandleCap(-1, v1Pos, Quaternion.LookRotation(e1AvgNormal, Vector3.forward), proj1, EventType.Repaint);
                         Handles.ArrowHandleCap(-1, v2Pos, Quaternion.LookRotation(e2AvgNormal, Vector3.forward), proj2, EventType.Repaint);
                     }
-
+#endif
                     if (!vertToIndexLookup.TryGetValue(v1Pos, out var v1Idx)) { v1Idx = vertToIndexLookup.Count; vertToIndexLookup.Add(v1Pos, v1Idx); }
                     if (!vertToIndexLookup.TryGetValue(v2Pos, out var v2Idx)) { v2Idx = vertToIndexLookup.Count; vertToIndexLookup.Add(v2Pos, v2Idx); }
                     if (!vertToIndexLookup.TryGetValue(v3Pos, out var v3Idx)) { v3Idx = vertToIndexLookup.Count; vertToIndexLookup.Add(v3Pos, v3Idx); }

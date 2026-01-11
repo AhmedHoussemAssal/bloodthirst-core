@@ -115,6 +115,8 @@ namespace Bloodthirst.Core.SceneManager
 
         private void Update()
         {
+            if(pendingCommands == null) { return; }
+
             // if nothing to run
             if (pendingCommands.Count == 0 && currentOperation == null)
             {

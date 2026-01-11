@@ -1,4 +1,5 @@
 ﻿using Bloodthirst.Utils;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -89,8 +90,8 @@ namespace Bloodthirst.Scripts.Utils
                 // vertices for corners
                 (gapsCount * (curveSettings.CornerSmoothing - 1) );
 
-            LineQuad[] quads = new LineQuad[segmentCount];
-            UIVertex[] vertices = new UIVertex[totalVerticesCount];
+            Span<LineQuad> quads = stackalloc LineQuad[segmentCount];
+            Span<UIVertex> vertices = stackalloc UIVertex[totalVerticesCount];
 
             // true means up
             // false means down
@@ -572,7 +573,12 @@ namespace Bloodthirst.Scripts.Utils
                 v.uv0 = uvPerVertex[i];
             }
 
-            tris.AddRange(vertices);
+            tris.Capacity = vertices.Length;
+
+            for (int i = 0; i < vertices.Length; i++)
+            {           
+                tris.Add(vertices[i]);
+            }
         }
     }
 }

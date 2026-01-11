@@ -124,14 +124,5 @@ namespace Bloodthirst.Core.BISDSystem
             id.TriggerRemoved();
         }
         #endregion
-
-        #region  load game
-        public List<GameObject> LoadGameState(GameStateSaveInstance gameData)
-        {
-            List<GameObject> gameState = new List<GameObject>();
-            SaveLoadManager.LoadEntities(gameData.GameDatas, gameState, true);
-            return gameState;
-        }
-        #endregion
     }
 }

@@ -323,7 +323,7 @@ namespace Bloodthirst.Core.BProvider
 
             if (info.InstanceLeaf.Value == null)
             {
-                return false;
+                info.InstanceLeaf.Value = new BProviderList<TInjectionType>();
             }
 
             return info.InstanceLeaf.Value.Remove(instance);
@@ -374,11 +374,39 @@ namespace Bloodthirst.Core.BProvider
 
         public InstanceWatcher<T> GetInstanceWatcher<T>()
         {
+            Type t = typeof(T);
+
+            TypeInfo info = GetOrCreateInfo(t);
+
+            if (info.InstanceLeaf == null)
+            {
+                info.InstanceLeaf = info.InstanceTree.GetOrCreateLeaf(info.TreeParentsList);
+            }
+
+            if (info.InstanceLeaf.Value == null)
+            {
+                info.InstanceLeaf.Value = new BProviderList<T>();
+            }
+
             return new InstanceWatcher<T>(this);
         }
 
         public InstanceWatcher<T> GetSingletonWatcher<T>()
         {
+            Type t = typeof(T);
+
+            TypeInfo info = GetOrCreateInfo(t);
+
+            if (info.SingletonLeaf == null)
+            {
+                info.SingletonLeaf = info.SingletonTree.GetOrCreateLeaf(info.TreeParentsList);
+            }
+
+            if (info.SingletonLeaf.Value == null)
+            {
+                info.SingletonLeaf.Value = new BProviderSingleton<T>(default);
+            }
+
             return new InstanceWatcher<T>(this);
         }
 

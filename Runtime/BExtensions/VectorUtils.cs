@@ -189,8 +189,9 @@ namespace Bloodthirst.Scripts.Utils
                 var curr = discreteAngles[i];
                 var next = discreteAngles[i + 1];
                 if (!MathUtils.IsBetween(angle, curr, next))
+                {
                     continue;
-
+                }
                 var diffA = angle - curr;
                 var diffB = next - angle;
 
@@ -227,7 +228,7 @@ namespace Bloodthirst.Scripts.Utils
         }
 
         /// <summary>
-        /// Get a mask version of the vector
+        /// Mutliply color
         /// </summary>
         /// <param name="original"></param>
         /// <returns></returns>
@@ -240,6 +241,12 @@ namespace Bloodthirst.Scripts.Utils
             res.a *= a;
 
             return res;
+        }
+
+        public static Color WithAlpha(this Color src , float a)
+        {
+            src.a = a;
+            return src;
         }
 
         /// <summary>

@@ -12,6 +12,24 @@ namespace Bloodthirst.Core.Utils
     /// </summary>
     public static class CollectionsUtils
     {
+        public static T GetRandom<T>(this IReadOnlyList<T> lst)
+        {
+            Assert.IsTrue(lst.Count != 0);
+
+            int idx = UnityEngine.Random.Range(0, lst.Count);
+
+            return lst[idx];
+        }
+
+        public static T GetRandom<T>(this IReadOnlyList<T> lst , out int idx)
+        {
+            Assert.IsTrue(lst.Count != 0);
+
+            idx = UnityEngine.Random.Range(0, lst.Count);
+
+            return lst[idx];
+        }
+
         /// <summary>
         /// <para>Shift every element in the list by <paramref name="rotationOffset"/> , behaving like a ring-buffer or a circular-linked-list </para>
         /// <para>if an element goes out of bounds (beyond 0 or list.Count) , it loops backs to the start or end , similar to a carouselle </para>

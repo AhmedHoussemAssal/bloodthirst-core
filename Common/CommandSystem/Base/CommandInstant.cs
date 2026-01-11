@@ -78,17 +78,12 @@ namespace Bloodthirst.System.CommandSystem
         private int updateOrder;
         public int UpdateOrder { get => updateOrder; set => updateOrder = value; }
 
-        /// <summary>
-        /// Executed on command start , defined in command and used by ICommandBatch
-        /// </summary>
-        private void ExecuteInternal()
-        {
-            Execute();
-        }
-
         void ICommandInstant.Execute()
         {
+            CommandState = COMMAND_STATE.EXECUTING;
+            OnCommandStart?.Invoke(this);
             Execute();
+            Success();
         }
 
         public abstract void Execute();
@@ -146,7 +141,7 @@ namespace Bloodthirst.System.CommandSystem
         {
             CommandState = COMMAND_STATE.EXECUTING;
             OnCommandStart?.Invoke(this);
-            ExecuteInternal();
+            Execute();
             Success();
         }
 

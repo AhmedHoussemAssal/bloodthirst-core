@@ -131,19 +131,19 @@ public class InOutArray<T>
 
     #region adding
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    // [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int Add(T item)
     {
         bool hasGap = stackPointer != -1;
 
         // 1 if have a gap we can insert into
         // 0 if we don't have a gap in the array
-        int asInt = OptimizationUtils.Reinterpret<bool, int>(hasGap);
+        int asInt = hasGap ? 1 : 0;
 
         return addJumpTable[asInt](item);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    // [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int InsertInGap(T item)
     {
         int emptySlot = EmptyIndiciesStack[stackPointer--];
@@ -155,7 +155,7 @@ public class InOutArray<T>
         return emptySlot;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    // [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int AddAtTheEnd(T item)
     {
         int insertionIndex = nextNewIndex++;
@@ -171,13 +171,13 @@ public class InOutArray<T>
 
     #region removing
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    // [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RemoveAtEmpty(int index)
     {
 
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    // [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RemoveAtExist(int index)
     {
         // we don't really need to remove , just add the index to the empty slots stack
@@ -188,7 +188,7 @@ public class InOutArray<T>
         count--;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    // [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void RemoveAt(int index)
     {
         int jumpingIndex = flagArray[index];
@@ -205,7 +205,7 @@ public class InOutArray<T>
     /// An iterator to help cleanly iterate over the array and avoid the gaps
     /// </summary>
     /// <param name="act"></param>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    // [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Iterate(Action<T, int> act)
     {
         iterateJumpTable[1] = act;
@@ -232,7 +232,7 @@ public class InOutArray<T>
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    // [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void IterateDoNothing(T item, int index)
     {
 
@@ -240,7 +240,7 @@ public class InOutArray<T>
     #endregion
 
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    // [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Contains(T item)
     {
         bool found = false;
@@ -257,7 +257,7 @@ public class InOutArray<T>
         return found;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    // [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Clear()
     {
         int i = 0;
