@@ -46,8 +46,18 @@ namespace Bloodthirst.Core.Utils
             public int width;
         }
 
+        /// <summary>
+        /// <para>Contains the populated rows of the Island in terms of filled segments in rows</para>
+        /// <para>The rows are expressed in the local space of the Rect</para>
+        /// <para>Example : Row.Segement[0].Firs() correponds to the first segment in the bottom row</para>
+        /// <para>Example : Row.Segement[bounds.height].Last() correponds to the last segment in the top row</para>
+        /// <para>NOTE : Row.Segement's values are in int increments</para>
+        /// <para>Row.x is always between [0 , bounds.width]</para>
+        /// <para>Row.width is always between [0 , bounds.width]</para>
+        /// <para></para>
+        /// </summary>
         public Segment[][] segmentsInRow;
-        public Rect bounds;
+        public RectInt bounds;
         public Vector2Int textureSize;
     }
 
@@ -111,7 +121,7 @@ namespace Bloodthirst.Core.Utils
 
         public static RasterizedIsland RasterizeTextureIsland(TextureIsland island)
         {
-            Rect rectf = new Rect(island.bounds.x, island.bounds.y, island.bounds.width, island.bounds.height);
+            RectInt rectf = new RectInt(island.bounds.x, island.bounds.y, island.bounds.width, island.bounds.height);
 
             RasterizedIsland rasterized = new RasterizedIsland()
             {
