@@ -118,7 +118,7 @@ namespace Bloodthirst.Core.BISDSystem
             }
         }
 
-        public static void LoadEntities(IReadOnlyList<SavedEntityEntry> savedEntities, IReadOnlyList<Vector3> spawnPositions, List<GameObject> spawnedEntities, bool withPostLoad)
+        public static void LoadEntities(IReadOnlyList<SavedEntityEntry> savedEntities, Action<int, GameObject> onPreInitialize, List<GameObject> spawnedEntities, bool withPostLoad)
         {
             Assert.IsTrue(spawnedEntities.Count == 0);
 
@@ -136,11 +136,7 @@ namespace Bloodthirst.Core.BISDSystem
                     // get the id component of the entity
                     GameObject spawned = kv.instanceProvider.GetInstanceToInject();
 
-                    if(spawnPositions != null)
-                    {
-                        Vector3 pos = spawnPositions[i];
-                        spawned.transform.position = pos;
-                    }
+                    onPreInitialize?.Invoke(i, spawned);
 
                     EntityIdentifier id = spawned.GetComponent<EntityIdentifier>();
                     Assert.IsNotNull(id);

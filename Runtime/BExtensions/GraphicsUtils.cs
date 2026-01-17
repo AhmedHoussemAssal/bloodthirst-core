@@ -196,11 +196,14 @@ namespace Bloodthirst.Core.Utils
             return rasterized;
         }
 
-        public static void GetIslandsFromTexture(Texture2D texture, List<TextureIsland> islands)
+        public static void GetIslandsFromTexture(Texture2D texture, List<TextureIsland> islands, float minMaskValue)
         {
             Vector2Int textureSize = new Vector2Int(texture.width, texture.height);
 
             Stack<Vector2Int> currentStack = new Stack<Vector2Int>();
+
+
+            Assert.IsTrue(minMaskValue > 0);
 
             using (ListPool<Color>.Get(out List<Color> texColors))
             using (ListPool<Vector2Int>.Get(out List<Vector2Int> freePoints))
@@ -233,7 +236,7 @@ namespace Bloodthirst.Core.Utils
                         int idx = currPoint.x + (textureSize.x * currPoint.y);
                         Color val = texColors[idx];
 
-                        if (val.r <= 0.1f) { continue; }
+                        if (val.r < minMaskValue) { continue; }
 
                         maskPoints.Clear();
                         currentStack.Clear();
@@ -249,7 +252,7 @@ namespace Bloodthirst.Core.Utils
                         int idx = currPoint.x + (textureSize.x * currPoint.y);
                         Color val = texColors[idx];
 
-                        if (val.r <= 0.1f) { continue; }
+                        if (val.r < minMaskValue) { continue; }
 
                         maskPoints.Add(currPoint);
 
