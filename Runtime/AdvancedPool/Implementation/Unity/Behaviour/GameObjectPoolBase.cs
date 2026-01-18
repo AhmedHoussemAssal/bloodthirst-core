@@ -56,12 +56,8 @@ namespace Bloodthirst.Core.AdvancedPool
 
         public override void Return(GameObject t)
         {
-            if (t == null)
-            {
-                Debug.Assert(t == null);
-                return;
-            }
-
+            Debug.Assert(t != null);
+        
             using (ListPool<IOnDespawn>.Get(out List<IOnDespawn> tmp))
             {
                 t.GetComponentsInChildren(true, tmp);
