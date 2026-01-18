@@ -4,6 +4,8 @@ using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Pool;
 using UnityEngine.Rendering;
+using Bloodthirst.Scripts.Utils;
+
 
 
 #if UNITY_EDITOR
@@ -78,6 +80,123 @@ namespace Bloodthirst.Core.Utils
     /// </summary>
     public static class GraphicsUtils
     {
+
+        public static void SimplifyIslandOutline(List<Vector2> inputOutline, List<Vector2> simplifiedOutline, int skipCount)
+        {
+            simplifiedOutline.Clear();
+            simplifiedOutline.Add(inputOutline[0]);
+            simplifiedOutline.Add(inputOutline[1]);
+
+            simplifiedOutline.Add(inputOutline[^1]);
+            simplifiedOutline.Add(inputOutline[^2]);
+
+            int indexOffset = (skipCount + 1) * 2;
+            for (int i = indexOffset; i < inputOutline.Count - 2; i += indexOffset)
+            {
+                simplifiedOutline.Add(inputOutline[i]);
+                simplifiedOutline.Add(inputOutline[i + 1]);
+            }
+        }
+
+        public static void CreateMeshFromIsland(ScaledRasterizedIsland scaled, Texture2D mask, Mesh mesh)
+        {
+            using (ListPool<Vector2>.Get(out var outlinePoints))
+            using (ListPool<Vector2>.Get(out var outlinePointsSimplified))
+            using (ListPool<Vector2>.Get(out var outlinePointsWithLerp))
+            using (ListPool<Vector3>.Get(out var vertPoints))
+            using (ListPool<int>.Get(out var indiPoints))
+            using (ListPool<TriangleIndicies>.Get(out var tris))
+            {
+                GraphicsUtils.GetIslandOutline(scaled, outlinePoints);
+
+                SimplifyIslandOutline(outlinePoints, outlinePointsSimplified, 8);
+
+                Vector2 center = default;
+
+                foreach (Vector2 p in outlinePointsSimplified)
+                {
+                    center += p;
+                }
+
+                center /= outlinePointsSimplified.Count;
+
+                outlinePointsWithLerp.AddRange(outlinePointsSimplified);
+                outlinePointsWithLerp.Add(center);
+
+                int lerpIt = 4;
+
+                foreach (Vector2 p in outlinePointsSimplified)
+                {
+                    for (int i = 1; i < lerpIt + 1; i++)
+                    {
+                        float t = i / (float)(lerpIt + 1);
+                        Vector2 lerpedP = Vector2.Lerp(p, center, t);
+
+                        outlinePointsWithLerp.Add(lerpedP);
+                    }
+                }
+
+                DelauneyTriangulation.Triangulate(outlinePointsWithLerp, tris, out _);
+
+                foreach (Vector2 p in outlinePointsWithLerp)
+                {
+                    Vector3 p3d = p.To3D();
+                    vertPoints.Add(p3d);
+                }
+
+                foreach (TriangleIndicies t in tris)
+                {
+                    Vector2 p1 = outlinePointsWithLerp[t.v1];
+                    Vector2 p2 = outlinePointsWithLerp[t.v2];
+                    Vector2 p3 = outlinePointsWithLerp[t.v3];
+
+                    Vector2 tCenter = (p1 + p2 + p3) / 3;
+
+                    Vector2 asUv = default;
+                    asUv.x = MathUtils.Remap(tCenter.x, -50, 50, 0, 1);
+                    asUv.y = MathUtils.Remap(tCenter.y, -50, 50, 0, 1);
+
+                    float maskVal = mask.GetPixelBilinear(asUv.x, asUv.y).r;
+
+                    if (maskVal < 0.01f) { continue; }
+
+                    indiPoints.Add(t.v1);
+                    indiPoints.Add(t.v2);
+                    indiPoints.Add(t.v3);
+                }
+
+                mesh.Clear();
+                mesh.SetVertices(vertPoints);
+                mesh.SetIndices(indiPoints, MeshTopology.Triangles, 0);
+                mesh.RecalculateNormals();
+            }
+        }
+
+
+        /// <summary>
+        /// Takes the islands rows and fills the list with the [Start , End] points of every row , going from bottom to top
+        /// </summary>
+        /// <param name="island"></param>
+        /// <param name="points"></param>
+        public static void GetIslandOutline(ScaledRasterizedIsland island, List<Vector2> points)
+        {
+            for (int i = 0; i < island.segmentsPerRow.Length; i++)
+            {
+                float y = MathUtils.Remap(i, 0, island.segmentsPerRow.Length - 1, island.bounds.yMin, island.bounds.yMax);
+
+                ScaledRasterizedIsland.Segment[] r = island.segmentsPerRow[i];
+
+                foreach (ScaledRasterizedIsland.Segment s in r)
+                {
+                    Vector2 p1 = new Vector2(s.x, y);
+                    Vector2 p2 = new Vector2(s.x + s.width, y);
+
+                    points.Add(p1);
+                    points.Add(p2);
+                }
+            }
+        }
+
         public static ScaledRasterizedIsland ScaleTextureIsland(RasterizedIsland island, Rect targetSpace)
         {
             Vector2Int textureSize = island.textureSize;
@@ -85,7 +204,7 @@ namespace Bloodthirst.Core.Utils
             Rect scaledRect = default;
             scaledRect.x = MathUtils.Remap(island.bounds.x, 0, textureSize.x, targetSpace.xMin, targetSpace.xMax);
             scaledRect.y = MathUtils.Remap(island.bounds.y, 0, textureSize.y, targetSpace.yMin, targetSpace.yMax);
-            scaledRect.width = MathUtils.Remap(island.bounds.width, 0, textureSize.x, 0 , targetSpace.width);
+            scaledRect.width = MathUtils.Remap(island.bounds.width, 0, textureSize.x, 0, targetSpace.width);
             scaledRect.height = MathUtils.Remap(island.bounds.height, 0, textureSize.y, 0, targetSpace.height);
 
             ScaledRasterizedIsland.Segment[][] scaledRows = new ScaledRasterizedIsland.Segment[island.segmentsInRow.Length][];
@@ -223,7 +342,7 @@ namespace Bloodthirst.Core.Utils
                     }
                 }
 
-                while(freePoints.Count != 0)
+                while (freePoints.Count != 0)
                 {
                     // keep iterating over the points
                     // until we find the first one that has a heatmap value
@@ -245,7 +364,7 @@ namespace Bloodthirst.Core.Utils
 
                     // we keep iterating and exploring the neighbors that have a value
                     // until we run out
-                    while(currentStack.Count != 0)
+                    while (currentStack.Count != 0)
                     {
                         Vector2Int currPoint = currentStack.Pop();
 
@@ -272,7 +391,7 @@ namespace Bloodthirst.Core.Utils
                         if (!lOOB && usedPoints.Add(l)) { currentStack.Push(l); }
                     }
 
-                    if(maskPoints.Count == 0) { continue; }
+                    if (maskPoints.Count == 0) { continue; }
 
                     Vector2Int[] maskPixels = maskPoints.ToArray();
                     int minX = maskPixels.Min(p => p.x);
