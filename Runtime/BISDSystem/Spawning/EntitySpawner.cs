@@ -38,7 +38,7 @@ namespace Bloodthirst.Core.BISDSystem
 
             using (ListPool<IInitializeInstance>.Get(out List<IInitializeInstance> tmp))
             {
-                id.GetComponentsInChildren(tmp);
+                id.GetComponentsInChildren(true, tmp);
 
                 // initialize identifier
                 foreach (IInitializeInstance init in tmp)
@@ -54,7 +54,7 @@ namespace Bloodthirst.Core.BISDSystem
 
             using (ListPool<IInitializeIdentifier>.Get(out List<IInitializeIdentifier> tmp))
             {
-                id.GetComponentsInChildren(tmp);
+                id.GetComponentsInChildren(true , tmp);
 
                 // initialize identifier
                 foreach (IInitializeIdentifier init in tmp)
@@ -70,7 +70,7 @@ namespace Bloodthirst.Core.BISDSystem
 
             using (ListPool<IEntityPostInit>.Get(out List<IEntityPostInit> tmp))
             {
-                id.GetComponentsInChildren(tmp);
+                id.GetComponentsInChildren(true , tmp);
 
                 // initialize identifier
                 foreach (IEntityPostInit init in tmp)
