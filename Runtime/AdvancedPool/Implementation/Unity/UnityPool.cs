@@ -10,10 +10,8 @@ namespace Bloodthirst.Core.AdvancedPool
         private static readonly Type Type = typeof(TObject);
         public override Type PooledType => Type;
 
-        [SerializeField]
         private TObject Prefab;
 
-        [SerializeField]
         private int PoolCount { get; set; }
 
         private List<TObject> _pool;

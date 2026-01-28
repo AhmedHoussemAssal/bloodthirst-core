@@ -11,5 +11,5 @@ MonoBehaviour:
   m_EditorHideFlags: 1
   m_Script: {fileID: 11500000, guid: ba67424266d72404a827451839478336, type: 3}
   m_Name: SceneCreatorData
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: SceneCreator.Editor::SceneCreatorData
   pendingScenesToProcess: []

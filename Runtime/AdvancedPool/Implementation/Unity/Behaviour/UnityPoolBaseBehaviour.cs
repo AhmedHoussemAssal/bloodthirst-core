@@ -49,15 +49,6 @@ namespace Bloodthirst.Core.AdvancedPool
 
         Type IPoolBehaviour.Type => type;
 
-        [SerializeField]
-#if ODIN_INSPECTOR || ODIN_INSPECTOR_3
-        
-#if ODIN_INSPECTOR
-[ReadOnly]
-#endif
-
-#endif
-
         UnityPoolBase IPoolBehaviour.Pool => Pool;
 
         UnityPool<TObject> IPoolBehaviour<TObject>.PoolWithType => Pool;

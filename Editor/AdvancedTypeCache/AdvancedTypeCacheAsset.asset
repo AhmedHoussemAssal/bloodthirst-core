@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 1
   m_Script: {fileID: 11500000, guid: 85183a91f1388374f96e9c4bf7aab9fe, type: 3}
   m_Name: AdvancedTypeCacheAsset
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: AdvancedTypeCache.Editor::Bloodthirst.Core.Utils.AdvancedTypeCacheAsset
   serializationData:
     SerializedFormat: 2
     SerializedBytes: 

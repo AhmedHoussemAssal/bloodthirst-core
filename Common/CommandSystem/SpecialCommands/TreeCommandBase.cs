@@ -20,8 +20,6 @@ namespace Bloodthirst.System.CommandSystem
 
         private List<TreeLeaf<int, CommandSettings>> cache;
         private int id;
-
-        [SerializeField]
         private TreeList<int, CommandSettings> RootNode { get; set; }
 
         private Func<int> cachedGetID;
