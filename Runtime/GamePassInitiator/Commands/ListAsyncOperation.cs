@@ -9,22 +9,9 @@ namespace Bloodthirst.Core.Setup
     {
         private readonly IList<IAsynOperationWrapper> subOperations;
 
-        private readonly bool showLoadingScreen;
-        public bool ShowLoadingScreen => showLoadingScreen;
-        public ListAsyncWrapper(IList<IAsynOperationWrapper> subOperations, bool showLoadingScreen)
+        public ListAsyncWrapper(IList<IAsynOperationWrapper> subOperations)
         {
             this.subOperations = subOperations;
-            this.showLoadingScreen = showLoadingScreen;
-        }
-        public bool ShouldExecute()
-        {
-            foreach(var subOperation in subOperations)
-            {
-                if (subOperation.ShouldExecute())
-                    return true;
-            }
-
-            return false;
         }
 
         IProgressCommand IAsynOperationWrapper.CreateOperation()
@@ -68,9 +55,6 @@ namespace Bloodthirst.Core.Setup
             for (int i = 0; i < subOperations.Count; i++)
             {
                 IAsynOperationWrapper op = subOperations[i];
-
-                if (!op.ShouldExecute())
-                    continue;
 
                 var cmd = op.CreateOperation();
 

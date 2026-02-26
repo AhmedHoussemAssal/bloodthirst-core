@@ -176,7 +176,7 @@ namespace Bloodthirst.Core.BISDSystem
                             }
                         }
 
-                        Assert.IsTrue(foundLoader);
+                        Assert.IsTrue(foundLoader , $"Couldn't find loader for the state of type {saveState.GetType()}");
                     }
 
                 }

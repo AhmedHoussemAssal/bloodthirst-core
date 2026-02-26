@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.Events;
 using UnityEngine.Pool;
 using UnityEngine.SceneManagement;
@@ -30,7 +32,7 @@ namespace Bloodthirst.Core.Utils
             return curr.TryGetComponent(out T _);
         }
 
-        public static void ResetTransform(this Transform t , ResetFlag flag = ResetFlag.All )
+        public static void ResetTransform(this Transform t, ResetFlag flag = ResetFlag.All)
         {
             switch (flag)
             {
@@ -70,7 +72,7 @@ namespace Bloodthirst.Core.Utils
 
         public static bool HasDuplicateSubscriptions(Delegate evt)
         {
-            if(evt == null)
+            if (evt == null)
             {
                 return false;
             }
@@ -243,6 +245,29 @@ namespace Bloodthirst.Core.Utils
             for (int i = t.childCount - 1; i >= 0; i--)
             {
                 UnityEngine.Object.DestroyImmediate(t.GetChild(i).gameObject);
+            }
+        }
+
+        public static void SetCollisionBetweenObjects(GameObject a, GameObject b, bool enableCollision)
+        {
+            Assert.IsTrue(a != b);
+            
+            using (ListPool<Collider>.Get(out List<Collider> aCols))
+            using (ListPool<Collider>.Get(out List<Collider> bCols))
+            {
+                a.GetComponentsInChildren(aCols);
+                b.GetComponentsInChildren(bCols);
+
+                Assert.IsTrue(aCols.Intersect(bCols).Count() == 0);
+
+                foreach (Collider bCol in bCols)
+                {
+                    foreach (Collider aCol in aCols)
+                    {
+                        Assert.IsTrue(aCol != bCol);
+                        Physics.IgnoreCollision(aCol, bCol, !enableCollision);
+                    }
+                }
             }
         }
     }

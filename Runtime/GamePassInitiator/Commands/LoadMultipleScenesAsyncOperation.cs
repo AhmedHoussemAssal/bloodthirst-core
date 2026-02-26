@@ -15,13 +15,10 @@ namespace Bloodthirst.Core.Setup
     {
         private readonly IList<string> scenes;
         private readonly bool triggerCallbacks;
-        private readonly bool showLoadingScreen;
-        public bool ShowLoadingScreen => showLoadingScreen;
-        public LoadMultipleScenesAsyncWrapper(IList<string> scenes, bool triggerCallbacks, bool showLoadingScreen)
+        public LoadMultipleScenesAsyncWrapper(IList<string> scenes, bool triggerCallbacks)
         {
             this.scenes = scenes;
             this.triggerCallbacks = triggerCallbacks;
-            this.showLoadingScreen = showLoadingScreen;
         }
 
         public bool ShouldExecute()

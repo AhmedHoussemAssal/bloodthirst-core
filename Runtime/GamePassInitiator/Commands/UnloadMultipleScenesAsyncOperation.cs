@@ -9,16 +9,9 @@ namespace Bloodthirst.Core.Setup
     {
         private readonly IList<ISceneInstanceManager> scenes;
 
-        private readonly bool showLoadingScreen;
-        public bool ShowLoadingScreen => showLoadingScreen;
-        public UnloadMultipleScenesAsyncWrapper(IList<ISceneInstanceManager> scenes, bool showLoadingScreen)
+        public UnloadMultipleScenesAsyncWrapper(IList<ISceneInstanceManager> scenes)
         {
             this.scenes = scenes;
-            this.showLoadingScreen = showLoadingScreen;
-        }
-        public bool ShouldExecute()
-        {
-            return true;
         }
 
         IProgressCommand IAsynOperationWrapper.CreateOperation()

@@ -12,6 +12,28 @@ namespace Bloodthirst.Core.Utils
     /// </summary>
     public static class CollectionsUtils
     {
+        public static int GetIndexOfMin<T>( IReadOnlyList<T> lst, Func<T,float> eval)
+        {
+            Assert.IsTrue(lst.Count != 0);
+
+            int idx = 0;
+            float minDist = eval(lst[0]);
+
+            for (int i = 1; i < lst.Count; i++)
+            {
+                T curr = lst[i];
+
+                float currDist = eval(curr);
+
+                if (currDist < minDist)
+                {
+                    idx = i;
+                    minDist = currDist;
+                }
+            }
+            return idx;
+        }
+
         public static T GetRandom<T>(this IReadOnlyList<T> lst)
         {
             Assert.IsTrue(lst.Count != 0);

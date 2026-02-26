@@ -47,6 +47,10 @@ namespace Bloodthirst.Systems.CameraSystem
         public Camera SceneCamera => sceneCamera;
 
         [SerializeField]
+        private Camera uiCamera = default;
+        public Camera UICamera => uiCamera;
+
+        [SerializeField]
         private float transitionDuration = default;
 
         [SerializeField]

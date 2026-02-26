@@ -15,25 +15,17 @@ namespace Bloodthirst.Core.Setup
     {
         private ISceneInstanceManager sceneInstanceManager;
         private readonly bool triggerCallbacks;
-        private readonly bool showLoadingScreen;
-        public bool ShowLoadingScreen => showLoadingScreen;
-        public UnloadSingleSceneAsyncWrapper(ISceneInstanceManager sceneInstanceManager, bool triggerCallbacks, bool showLoadingScreen)
+
+        public UnloadSingleSceneAsyncWrapper(ISceneInstanceManager sceneInstanceManager, bool triggerCallbacks)
         {
             this.sceneInstanceManager = sceneInstanceManager;
             this.triggerCallbacks = triggerCallbacks;
-            this.showLoadingScreen = showLoadingScreen;
-        }
-
-        public bool ShouldExecute()
-        {
-            return true;
         }
 
         IProgressCommand IAsynOperationWrapper.CreateOperation()
         {
             return new UnloadSingleSceneAsyncOperation(sceneInstanceManager , triggerCallbacks);
         }
-
     }
 
     public class UnloadSingleSceneAsyncOperation : CommandBase<UnloadSingleSceneAsyncOperation>, IProgressCommand

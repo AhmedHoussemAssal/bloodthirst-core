@@ -16,12 +16,9 @@ namespace Bloodthirst.Core.Setup
     {
         private readonly float seconds;
 
-        private readonly bool showLoadingScreen;
-        public bool ShowLoadingScreen => showLoadingScreen;
-        public WaitSecondsAsyncWrapper(float seconds, bool showLoadingScreen)
+        public WaitSecondsAsyncWrapper(float seconds)
         {
             this.seconds = seconds;
-            this.showLoadingScreen = showLoadingScreen;
         }
 
         public IProgressCommand CreateOperation()
@@ -86,13 +83,10 @@ namespace Bloodthirst.Core.Setup
     {
         private readonly string scenePath;
         private readonly bool triggerSceneCallbacks;
-        private readonly bool showLoadingScreen;
-        public bool ShowLoadingScreen => showLoadingScreen;
-        public LoadSingleSceneAsyncWrapper(string scenePath, bool triggerSceneCallbacks, bool showLoadingScreen)
+        public LoadSingleSceneAsyncWrapper(string scenePath, bool triggerSceneCallbacks)
         {
             this.scenePath = scenePath;
             this.triggerSceneCallbacks = triggerSceneCallbacks;
-            this.showLoadingScreen = showLoadingScreen;
         }
 
         public bool ShouldExecute()

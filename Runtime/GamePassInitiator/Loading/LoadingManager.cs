@@ -42,10 +42,6 @@ namespace Bloodthirst.Core.SceneManager
         [SerializeField]
         private LOADDING_STATE state;
 
-        [SerializeField]
-        private bool showLoading;
-
-        public bool ShowLoading => showLoading;
         /// <summary>
         /// Progress value between 0 -> 1
         /// </summary>
@@ -115,7 +111,7 @@ namespace Bloodthirst.Core.SceneManager
 
         private void Update()
         {
-            if(pendingCommands == null) { return; }
+            if (pendingCommands == null) { return; }
 
             // if nothing to run
             if (pendingCommands.Count == 0 && currentOperation == null)
@@ -146,19 +142,12 @@ namespace Bloodthirst.Core.SceneManager
                 AsynOperationInternalHandle curr = pendingCommands[0];
                 pendingCommands.RemoveAt(0);
 
-                if (!curr.handle.Operation.ShouldExecute())
-                {
-                    curr.handle.IsDone = true;
-                }
-                else
-                {
-                    currentOperation = curr;
-                    showLoading = curr.ShowLoadingScreen;
+                currentOperation = curr;
 
-                    IProgressCommand cmd = curr.handle.Operation.CreateOperation();
-                    curr.command = cmd;
-                    commandManager.AppendCommand(this, cmd, true);
-                }
+                IProgressCommand cmd = curr.handle.Operation.CreateOperation();
+                curr.command = cmd;
+                commandManager.AppendCommand(this, cmd, true);
+
             }
 
             RefreshState();
@@ -225,7 +214,6 @@ namespace Bloodthirst.Core.SceneManager
             {
                 command = null,
                 handle = handle,
-                ShowLoadingScreen = asyncOperations.ShowLoadingScreen
             };
 
             pendingCommands.Add(internalHandle);
@@ -238,7 +226,6 @@ namespace Bloodthirst.Core.SceneManager
         {
             public AsyncOperationHandle handle;
             public IProgressCommand command;
-            public bool ShowLoadingScreen;
         }
     }
 

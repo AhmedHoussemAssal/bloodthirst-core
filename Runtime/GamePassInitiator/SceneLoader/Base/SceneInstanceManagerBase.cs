@@ -328,7 +328,7 @@ namespace Bloodthirst.Core.SceneManager
 #endif
         private void UnloadScene()
         {
-            loadingManager.RunAsyncTask(new UnloadSingleSceneAsyncWrapper(this, true, true));
+            loadingManager.RunAsyncTask(new UnloadSingleSceneAsyncWrapper(this, true));
         }
     }
 }

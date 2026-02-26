@@ -1,4 +1,5 @@
 ﻿using Bloodthirst.Core.Utils;
+using Sirenix.OdinInspector;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -49,6 +50,15 @@ namespace Bloodthirst.Core.UI
         }
 
         public event Action<UIButton> OnStateChanged;
+        
+        [ContextMenu("Simulate Click")]
+        private void SimulateClick()
+        {
+            Assert.IsTrue(CheckDuplicateCallbacks());
+
+            clickEvent.Invoke(this, state);
+            clickEventCsharp?.Invoke(this, state);
+        }
 
         public bool ShouldProcess(BaseEventData eventData)
         {
@@ -90,6 +100,7 @@ namespace Bloodthirst.Core.UI
             clickEvent.Invoke(this, state);
             clickEventCsharp?.Invoke(this, state);
         }
+
 
         void IPointerClickHandler.OnPointerClick(PointerEventData eventData)
         {

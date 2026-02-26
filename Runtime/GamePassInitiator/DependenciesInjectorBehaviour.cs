@@ -50,22 +50,18 @@ namespace Bloodthirst.Core.GameInitPass
 
         public void RegisterUnityObjects()
         {
-            BProvider.BProvider scProvider = new BProvider.BProvider();
-
             foreach (ScriptableObject sc in allScriptables)
             {
                 Type scType = sc.GetType();
 
                 if (sc is ISingletonScriptableObject singleton)
                 {
-                    scProvider.RegisterSingleton(scType, singleton);
+                    BProviderRuntime.Instance.RegisterSingleton(scType, singleton);
                     continue;
                 }
 
-                scProvider.RegisterInstance(scType, sc);
+                BProviderRuntime.Instance.RegisterInstance(scType, sc);
             }
-
-            BProviderRuntime.Instance.MergeWith(scProvider);
         }
 
         private void SceneDependencies()

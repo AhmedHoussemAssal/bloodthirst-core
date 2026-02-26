@@ -8,20 +8,11 @@ namespace Bloodthirst.Core.Setup
     public class CommandAsyncWrapper : IAsynOperationWrapper
     {
         private readonly ICommandBase cmd;
-        private readonly bool showLoadingScreen;
-        public bool ShowLoadingScreen => showLoadingScreen;
 
         public CommandAsyncWrapper(ICommandBase cmd, bool removeWhenDone, bool showLoadingScreen)
         {
             this.cmd = cmd;
             cmd.RemoveWhenDone = removeWhenDone;
-            this.showLoadingScreen = showLoadingScreen;
-        }
-
-
-        public bool ShouldExecute()
-        {
-            return true;
         }
 
         IProgressCommand IAsynOperationWrapper.CreateOperation()
