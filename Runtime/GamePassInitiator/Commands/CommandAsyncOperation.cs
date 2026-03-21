@@ -9,7 +9,7 @@ namespace Bloodthirst.Core.Setup
     {
         private readonly ICommandBase cmd;
 
-        public CommandAsyncWrapper(ICommandBase cmd, bool removeWhenDone, bool showLoadingScreen)
+        public CommandAsyncWrapper(ICommandBase cmd, bool removeWhenDone)
         {
             this.cmd = cmd;
             cmd.RemoveWhenDone = removeWhenDone;

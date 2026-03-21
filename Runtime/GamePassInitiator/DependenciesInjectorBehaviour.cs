@@ -37,8 +37,7 @@ namespace Bloodthirst.Core.GameInitPass
         private void FetchAllScriptableObjects()
         {
             allScriptables = AssetDatabase.FindAssets($"t:{nameof(ScriptableObject)}", searchInFolders)
-                .Select(g => AssetDatabase.GUIDToAssetPath(g))
-                .Select(p => AssetDatabase.LoadAssetAtPath<ScriptableObject>(p))
+                .Select(guid => AssetDatabase.LoadAssetByGUID<ScriptableObject>(new GUID(guid)))
                 .ToList();
         }
 #endif

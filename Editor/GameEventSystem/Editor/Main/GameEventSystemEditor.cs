@@ -115,8 +115,7 @@ namespace Bloodthirst.Core.GameEventSystem
         private List<GameEventSystemAsset> GetAllGameEventAssets()
         {
             List<GameEventSystemAsset> assets = AssetDatabase.FindAssets("t:GameEventSystemAsset")
-               .Select(g => AssetDatabase.GUIDToAssetPath(g))
-               .Select(p => AssetDatabase.LoadAssetAtPath<GameEventSystemAsset>(p))
+               .Select(guid => AssetDatabase.LoadAssetByGUID<GameEventSystemAsset>(new GUID(guid)))
                .ToList();
 
             return assets;

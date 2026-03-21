@@ -57,9 +57,7 @@ namespace Bloodthirst.Core.Utils
             for (int i = 0; i < assetGuids.Length; i++)
             {
                 string guid = assetGuids[i];
-                string path = AssetDatabase.GUIDToAssetPath(guid);
-
-                T asset = AssetDatabase.LoadAssetAtPath<T>(path);
+                T asset = AssetDatabase.LoadAssetByGUID<T>(new GUID(guid));
 
                 yield return asset;
             }
@@ -261,9 +259,7 @@ namespace Bloodthirst.Core.Utils
             string[] guids = AssetDatabase.FindAssets("t:MonoScript");
             for (int i = 0; i < guids.Length; i++)
             {
-                string assetPath = AssetDatabase.GUIDToAssetPath(guids[i]);
-
-                MonoScript asset = AssetDatabase.LoadAssetAtPath<MonoScript>(assetPath);
+                MonoScript asset = AssetDatabase.LoadAssetByGUID<MonoScript>(new GUID(guids[i]));
 
                 if (asset != null)
                 {

@@ -82,27 +82,36 @@ namespace Bloodthirst.Core.AdvancedPool
         }
 
 #if UNITY_EDITOR
-        [MenuItem("Assets/Pooling/Add To Pool")]
-        public static void NewMenuOptionValidation()
+
+        [MenuItem("Assets/Pooling/Add To Pool", true)]
+        public static bool AddPrefabToPoolValidation()
         {
-            if(Selection.activeObject == null)
-            {
-                return;
-            }
+            if (Selection.activeObject == null) { return false; }
 
-            if(!(Selection.activeObject is GameObject go))
-            {
-                return;
-            }
+            if (!(Selection.activeObject is GameObject go)) { return false; }
 
-            if(!PrefabUtility.IsPartOfPrefabAsset(go))
-            {
-                return;
-            }
+            if (!PrefabUtility.IsPartOfPrefabAsset(go)) { return false; }
+
 
             GlobalPoolData pool = AssetDatabase.FindAssets($"t:{nameof(GlobalPoolData)}")
-                .Select(g => AssetDatabase.GUIDToAssetPath(g))
-                .Select(p => AssetDatabase.LoadAssetAtPath<GlobalPoolData>(p))
+                .Select(g => AssetDatabase.LoadAssetByGUID<GlobalPoolData>(new GUID(g)))
+                .FirstOrDefault();
+
+            // Check if prefab already added
+            foreach(GlobalPoolEntry e in pool.poolEntries)
+            {
+                if(e.Prefab == go) { return false; }
+            }
+
+            return true;
+        }
+        [MenuItem("Assets/Pooling/Add To Pool")]
+        public static void AddPrefabToPool()
+        {
+            GameObject go = (GameObject)Selection.activeObject;
+
+            GlobalPoolData pool = AssetDatabase.FindAssets($"t:{nameof(GlobalPoolData)}")
+                .Select(g => AssetDatabase.LoadAssetByGUID<GlobalPoolData>(new GUID(g)))
                 .FirstOrDefault();
 
             pool.Add(go, 10);

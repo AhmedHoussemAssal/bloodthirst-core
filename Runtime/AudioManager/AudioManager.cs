@@ -110,6 +110,7 @@ namespace Bloodthirst.Core.Audio
             audioSource.transform.SetParent(transform);
             audioSource.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
 
+            audioSource.pitch = 1;
             audioSource.spatialBlend = 0;
             audioSource.volume = 1;
             audioSource.loop = false;
@@ -160,6 +161,22 @@ namespace Bloodthirst.Core.Audio
             audioSource.transform.position = pos;
             audioSource.clip = audioClip;
             audioSource.spatialBlend = 1;
+
+            audioSource.Play();
+            busyAudioSources.Add(audioSource);
+
+            return audioSource;
+        }
+
+        public AudioSource PlayOnShot(AudioClip audioClip)
+        {
+            Assert.IsNotNull(audioClip);
+
+            AudioSource audioSource = GetFreeAudioSource();
+            ResetAudioSource(audioSource);
+
+            audioSource.clip = audioClip;
+            audioSource.spatialBlend = 0;
 
             audioSource.Play();
             busyAudioSources.Add(audioSource);

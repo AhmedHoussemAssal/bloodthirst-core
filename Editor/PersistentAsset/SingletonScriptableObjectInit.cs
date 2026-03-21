@@ -42,8 +42,7 @@ namespace Bloodthirst.Core.PersistantAsset
                 //UnityEngine.Object[] allResources = Resources.LoadAll(string.Empty, type);
                 UnityEngine.Object[] allResources = AssetDatabase
                     .FindAssets($"t:{type.Name}")
-                    .Select(guid => AssetDatabase.GUIDToAssetPath(guid))
-                    .Select(path => AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(path))
+                    .Select(guid => AssetDatabase.LoadAssetByGUID<UnityEngine.Object>(new GUID(guid)))
                     .ToArray();
 
                 ScriptableObject so = null;

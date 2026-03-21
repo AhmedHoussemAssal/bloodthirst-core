@@ -201,7 +201,7 @@ namespace Bloodthirst.System.CommandSystem
             return GetResult();
         }
 
-        public override void Execute()
+        public sealed override void Execute()
         {
             Result = GetResult();
         }
