@@ -17,9 +17,9 @@ namespace Bloodthirst.Core.Utils
         [Flags]
         public enum ResetFlag
         {
-            PositionAndRotation,
-            Scale,
-            All
+            PositionAndRotation = 1,
+            Scale = 2,
+            All = 3
         }
         public static bool HasComponent<T>(this GameObject curr) where T : Component
         {
@@ -34,12 +34,14 @@ namespace Bloodthirst.Core.Utils
 
         public static void ResetTransform(this Transform t, ResetFlag flag = ResetFlag.All)
         {
-            switch (flag)
+            if ((flag & ResetFlag.PositionAndRotation) == ResetFlag.PositionAndRotation)
             {
-                case ResetFlag.PositionAndRotation: { t.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity); return; }
-                case ResetFlag.Scale: { t.localScale = Vector3.one; return; }
-                case ResetFlag.All: { t.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity); t.localScale = Vector3.one; return; }
-                default: { throw new NotImplementedException($"Missing case {flag}"); }
+                t.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+            }
+
+            if ((flag & ResetFlag.Scale) == ResetFlag.Scale)
+            {
+                t.localScale = Vector3.one;
             }
         }
 
@@ -251,7 +253,7 @@ namespace Bloodthirst.Core.Utils
         public static void SetCollisionBetweenObjects(GameObject a, GameObject b, bool enableCollision)
         {
             Assert.IsTrue(a != b);
-            
+
             using (ListPool<Collider>.Get(out List<Collider> aCols))
             using (ListPool<Collider>.Get(out List<Collider> bCols))
             {

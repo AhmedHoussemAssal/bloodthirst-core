@@ -14,6 +14,21 @@ namespace Bloodthirst.Scripts.Utils
             public int index;
         }
 
+        public static float GetLineLength(IReadOnlyList<Vector3> points)
+        {
+            float distance = 0;
+            
+            for (int i = 0; i < points.Count - 1; i ++)
+            {
+                Vector2 curr = points[i];
+                Vector2 next = points[i + 1];
+
+                distance += Vector2.Distance(curr, next);
+            }
+
+            return distance;
+        }
+
         public static void GetClosestInDirection(IReadOnlyList<Vector2> allSelection, Vector2 start, Vector2 dir, List<VectorIndexPair> sortedResult)
         {
             Assert.IsTrue( Mathf.Approximately( dir.sqrMagnitude , 1));
@@ -417,6 +432,18 @@ namespace Bloodthirst.Scripts.Utils
 
             return true;
 
+        }
+
+        public static Vector2 GetAverage(IReadOnlyList<Vector2> points)
+        {
+            Vector2 avg = default;
+            foreach (Vector2 p in points)
+            {
+                avg += p;
+            }
+            avg /= points.Count;
+
+            return avg;
         }
     }
 }
