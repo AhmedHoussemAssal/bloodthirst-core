@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.Assertions;
 
 namespace Bloodthirst.Core.Utils
@@ -43,6 +44,28 @@ namespace Bloodthirst.Core.Utils
 
             return ((newMax - newMin) * ratio) + newMin;
 
+        }
+
+        /// <summary>
+        /// Take a positive angle [0 , 360 , 720 , etc ...] and remaps it to [-180 , 180]
+        /// </summary>
+        /// <param name="angle"></param>
+        /// <returns></returns>
+        public static float RoundAngle(float angle)
+        {
+            while (angle < 0)
+            {
+                angle += 360;
+            }
+
+            angle %= 360;
+
+            if(angle > 180)
+            {
+                angle = angle - 360;
+            }
+
+            return angle;
         }
     }
 }

@@ -21,6 +21,7 @@ namespace Bloodthirst.Core.Utils
             Scale = 2,
             All = 3
         }
+
         public static bool HasComponent<T>(this GameObject curr) where T : Component
         {
             return curr.TryGetComponent(out T _);
@@ -142,6 +143,63 @@ namespace Bloodthirst.Core.Utils
                 int years = Convert.ToInt32(Math.Floor((double)ts.Days / 365));
                 return years <= 1 ? "one year ago" : years + " years ago";
             }
+        }
+
+        public static int GetRelativeDepth(Transform parent , Transform child)
+        {
+            int depth = 0;
+
+            var curr = child;
+
+            while(curr != parent && curr != null)
+            {
+                depth++;
+                curr = curr.parent;
+            }
+
+            Assert.IsNotNull(child , $"{child} is not a child or {parent}");
+
+            return depth;
+        }
+
+        /// <summary>
+        /// <para>Get the children of a gameObject in a BFS manner , starting with the parent and ending with deepest child</para>
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="go"></param>
+        /// <param name="cmps"></param>
+        public static void GetComponentsInChildrenBFS<T>(GameObject go , List<T> cmps) where T : Component
+        {
+            int BFSFunc(T a , T b)
+            {
+                var aDepth = GetRelativeDepth(go.transform , a.transform);
+                var bDepth = GetRelativeDepth(go.transform , b.transform);
+
+                // if components have different depth , then use depth to sort
+                if(aDepth != bDepth) 
+                { 
+                    return aDepth < bDepth ? -1 : 1; 
+                }
+
+                if(a.transform.parent == b.transform.parent)
+                {
+                    return a.transform.GetSiblingIndex() < b.transform.GetSiblingIndex() ? -1 : 1;
+                }
+
+                // if components have different GameObject , then use order in DFS list
+                if (a.transform != b.transform) 
+                {
+                    int aIdx = cmps.IndexOf(a);
+                    int bIdx = cmps.IndexOf(b);
+                    return aIdx < bIdx  ? -1 : 1; 
+                }
+
+                return a.GetComponentIndex() < b.GetComponentIndex() ? -1 : 1;
+            };
+
+            // this uses DFS to get the commponents
+            go.GetComponentsInChildren(cmps);
+            cmps.Sort(BFSFunc);
         }
 
         public static string GetGameObjectScenePath(GameObject gameObject)

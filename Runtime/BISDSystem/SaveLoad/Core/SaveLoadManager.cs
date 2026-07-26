@@ -26,13 +26,13 @@ namespace Bloodthirst.Core.BISDSystem
             public IRuntimeState state;
         }
 
-        private static List<IGameStateLoader> loaders = new List<IGameStateLoader>();
+        private List<IGameStateLoader> loaders = new List<IGameStateLoader>();
 
-        private static List<IGameStateSaver> savers = new List<IGameStateSaver>();
-        public static IReadOnlyList<IGameStateLoader> Loaders => loaders;
-        public static IReadOnlyList<IGameStateSaver> Savers => savers;
+        private List<IGameStateSaver> savers = new List<IGameStateSaver>();
+        public IReadOnlyList<IGameStateLoader> Loaders => loaders;
+        public IReadOnlyList<IGameStateSaver> Savers => savers;
 
-        public static void Initialize()
+        public void Initialize()
         {
             IEnumerable<Type> loadTypes = TypeUtils.AllTypes
                 .Where(t => t.IsClass)
@@ -64,7 +64,7 @@ namespace Bloodthirst.Core.BISDSystem
         [Button]
 #endif
 
-        public static void SaveRuntimeState(IReadOnlyList<GameObject> gos, List<SavedEntityEntry> results)
+        public void SaveRuntimeState(IReadOnlyList<GameObject> gos, List<SavedEntityEntry> results)
         {
             SavingContext context = new SavingContext();
 
@@ -109,7 +109,7 @@ namespace Bloodthirst.Core.BISDSystem
             }
         }
 
-        public static void SaveRuntimeState(List<SavedEntityEntry> results)
+        public void SaveRuntimeState(List<SavedEntityEntry> results)
         {
             using (ListPool<GameObject>.Get(out var gos))
             {
@@ -118,14 +118,14 @@ namespace Bloodthirst.Core.BISDSystem
             }
         }
 
-        public static void LoadEntities(IReadOnlyList<SavedEntityEntry> savedEntities, Action<int, GameObject> onPreInitialize, List<GameObject> spawnedEntities, bool withPostLoad)
+        public void LoadEntities(IReadOnlyList<SavedEntityEntry> savedEntities, Action<int, GameObject> onPreInitialize, Dictionary<SavedEntityEntry, GameObject> spawnedEntities, bool withPostLoad)
         {
             Assert.IsTrue(spawnedEntities.Count == 0);
 
             LoadingContext context = new LoadingContext();
 
             using (ListPool<IPostEntitiesLoaded>.Get(out List<IPostEntitiesLoaded> postLoads))
-            using (ListPool<EntityIdentifier>.Get(out List<EntityIdentifier> ids))
+            using (DictionaryPool<SavedEntityEntry, EntityIdentifier>.Get(out Dictionary<SavedEntityEntry, EntityIdentifier> ids))
             using (DictionaryPool<IGameStateLoader, List<EntityStatePair>>.Get(out Dictionary<IGameStateLoader, List<EntityStatePair>> entityStatePairs))
             {
                 // for each entity
@@ -133,55 +133,47 @@ namespace Bloodthirst.Core.BISDSystem
                 {
                     SavedEntityEntry kv = savedEntities[i];
 
-                    // get the id component of the entity
                     GameObject spawned = kv.instanceProvider.GetInstanceToInject();
-
-                    onPreInitialize?.Invoke(i, spawned);
-
                     EntityIdentifier id = spawned.GetComponent<EntityIdentifier>();
                     Assert.IsNotNull(id);
 
-                    ids.Add(id);
+                    onPreInitialize?.Invoke(i, spawned);
 
+                    ids.Add(kv, id);
+
+                    // set the entity identifier for all sub components
                     EntitySpawner.IntializeEntityIdentifier(id);
 
+                    // ensure that all the sub components have an assigned instance
+                    // with a default OR injected instance
                     EntitySpawner.IntializeInstances(id);
 
                     context.loadedEntities.Add(id);
 
+                    // iterate over all the save states and inject them into the correct components
                     foreach (ISaveState saveState in kv.states)
                     {
-                        bool foundLoader = false;
+                        // NOTE : notice how it's assumed that every saveState should be loaded by a UNIQUE loader
+                        // if that for some reason changes , edit this part
+                        IGameStateLoader loader = loaders.FirstOrDefault(l => l.CanLoad(spawned, saveState));
 
-                        foreach (IGameStateLoader loader in loaders)
+                        Assert.IsNotNull(loader, $"Couldn't find loader for the state of type {saveState.GetType()}");
+
+                        IRuntimeState gameState = loader.ApplyState(spawned, saveState, context);
+
+                        if (!entityStatePairs.TryGetValue(loader, out List<EntityStatePair> pairs))
                         {
-                            if (!loader.CanLoad(spawned, saveState)) { continue; }
-
-                            foundLoader = true;
-                            IRuntimeState gameState = loader.ApplyState(spawned, saveState, context);
-
-                            try
-                            {
-                                if (!entityStatePairs.TryGetValue(loader, out var pairs))
-                                {
-                                    pairs = new List<EntityStatePair>();
-                                    entityStatePairs.Add(loader, pairs);
-                                }
-
-                                pairs.Add(new EntityStatePair() { entity = spawned, state = gameState });
-                            }
-                            catch (Exception ex)
-                            {
-                                Debug.LogException(ex);
-                            }
+                            pairs = new List<EntityStatePair>();
+                            entityStatePairs.Add(loader, pairs);
                         }
 
-                        Assert.IsTrue(foundLoader , $"Couldn't find loader for the state of type {saveState.GetType()}");
+                        // we store a list pairing every loader with a list of ALL the states it's responsible for loading
+                        pairs.Add(new EntityStatePair() { entity = spawned, state = gameState });
                     }
-
                 }
 
-                // link refs
+                // now , we use the loader-[states] entris to trigger the reference linking phase
+                // each loader is responsible for linking it's list of specific states
                 foreach (KeyValuePair<IGameStateLoader, List<EntityStatePair>> kv in entityStatePairs)
                 {
                     IGameStateLoader loader = kv.Key;
@@ -195,26 +187,20 @@ namespace Bloodthirst.Core.BISDSystem
                 // after all entities are loaded
                 if (withPostLoad)
                 {
-                    foreach (EntityIdentifier id in ids)
+                    foreach (EntityIdentifier id in ids.Values)
                     {
-                        postLoads.Clear();
-                        id.GetComponentsInChildren(true, postLoads);
-
-                        foreach (IPostEntitiesLoaded p in postLoads)
-                        {
-                            p.PostEntitiesLoaded();
-                        }
+                        EntitySpawner.PostEntityLoaded(id.gameObject);
                     }
                 }
 
-                foreach (EntityIdentifier id in ids)
+                foreach (EntityIdentifier id in ids.Values)
                 {
-                    EntitySpawner.PostInitialize(id);
+                    EntitySpawner.PostInitialize(id.gameObject);
                 }
 
-                foreach (EntityIdentifier id in ids)
+                foreach (KeyValuePair<SavedEntityEntry, EntityIdentifier> kv in ids)
                 {
-                    spawnedEntities.Add(id.gameObject);
+                    spawnedEntities.Add(kv.Key, kv.Value.gameObject);
                 }
             }
         }

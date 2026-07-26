@@ -100,6 +100,11 @@ namespace Bloodthirst.Core.Utils
         /// <returns></returns>
         public static bool CollectionEquals<T>(IReadOnlyList<T> a , IReadOnlyList<T> b)
         {
+            if(a == null || b == null)
+            {
+                if(a == null && b == null) { return true; }
+                return false;
+            }
             if(a.Count != b.Count)
             {
                 return false;

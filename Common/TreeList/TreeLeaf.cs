@@ -11,21 +11,37 @@ namespace Bloodthirst.Core.TreeList
     public class TreeLeaf<TKey, TValue>
     {
 #if ODIN_INSPECTOR || ODIN_INSPECTOR_3
-        #if ODIN_INSPECTOR[OdinSerialize]#endif
+        
+#if ODIN_INSPECTOR
+[OdinSerialize]
+#endif
+
 #endif
         private TreeLeaf<TKey, TValue> parent;
 
 #if ODIN_INSPECTOR || ODIN_INSPECTOR_3
-        #if ODIN_INSPECTOR[OdinSerialize]#endif
+        
+#if ODIN_INSPECTOR
+[OdinSerialize]
+#endif
+
 #endif
         private List<TreeLeaf<TKey, TValue>> subLeafs;
 
 #if ODIN_INSPECTOR || ODIN_INSPECTOR_3
-        #if ODIN_INSPECTOR[OdinSerialize]#endif
+        
+#if ODIN_INSPECTOR
+[OdinSerialize]
+#endif
+
 #endif
         private TKey leafKey;
 #if ODIN_INSPECTOR || ODIN_INSPECTOR_3
-        #if ODIN_INSPECTOR[OdinSerialize]#endif
+        
+#if ODIN_INSPECTOR
+[OdinSerialize]
+#endif
+
 #endif
         private TValue val;
 

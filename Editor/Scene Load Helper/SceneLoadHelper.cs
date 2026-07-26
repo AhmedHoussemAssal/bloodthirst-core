@@ -181,7 +181,7 @@ public class SceneLoadHelper : EditorWindow
         if (!HasOpenInstances<SceneLoadHelper>())
             return;
 
-        SceneLoadHelper wnd = GetWindow<SceneLoadHelper>();
+        SceneLoadHelper wnd = GetWindow<SceneLoadHelper>(nameof(SceneLoadHelper) , false);
 
         // if a folder is deleted, check if is have scene inside it
         if (AssetDatabase.IsValidFolder(importer.assetPath))

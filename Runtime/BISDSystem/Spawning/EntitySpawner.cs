@@ -8,8 +8,7 @@ namespace Bloodthirst.Core.BISDSystem
 {
     public class EntitySpawner
     {
-        #region setup
-        public void AssignID(GameObject entity)
+        public static void AssignID(GameObject entity)
         {
             // we set the id after since we might be creating new instances of the states
             EntityIdentifier id = entity.GetComponent<EntityIdentifier>();
@@ -19,7 +18,7 @@ namespace Bloodthirst.Core.BISDSystem
             id.TriggerSpawned();
         }
 
-        public void PostEntityLoaded(GameObject entity)
+        public static void PostEntityLoaded(GameObject entity)
         {
             using (ListPool<IPostEntitiesLoaded>.Get(out var tmp))
             {
@@ -64,13 +63,11 @@ namespace Bloodthirst.Core.BISDSystem
             }
         }
 
-        public static void PostInitialize(EntityIdentifier id)
+        public static void PostInitialize(GameObject go)
         {
-            Assert.IsNotNull(id);
-
             using (ListPool<IEntityPostInit>.Get(out List<IEntityPostInit> tmp))
             {
-                id.GetComponentsInChildren(true , tmp);
+                go.GetComponentsInChildren(true , tmp);
 
                 // initialize identifier
                 foreach (IEntityPostInit init in tmp)
@@ -80,6 +77,11 @@ namespace Bloodthirst.Core.BISDSystem
             }
         }
 
+        /// <summary>
+        /// <para>Calls the entity initialization callbacks and propagates the entity ID into the child components</para>
+        /// <para>NOTE : this assumes that the Entity ID is already correctly assigned</para>
+        /// </summary>
+        /// <param name="entity"></param>
         public static void InjectStates(GameObject entity)
         {
             // get instance register and provider and identifier
@@ -89,40 +91,7 @@ namespace Bloodthirst.Core.BISDSystem
 
             IntializeEntityIdentifier(id);
             IntializeInstances(id);
-            PostInitialize(id);
+            PostInitialize(id.gameObject);
         }
-        public BEHAVIOUR AddBehaviour<BEHAVIOUR, INSTANCE, STATE, DATA>(MonoBehaviour entity) where DATA : EntityData where STATE : class, IEntityState<DATA>, new() where INSTANCE : EntityInstance<DATA, STATE, INSTANCE>, new() where BEHAVIOUR : EntityBehaviour<DATA, STATE, INSTANCE>
-        {
-            // get instance register and provider and identifier
-
-            EntityIdentifier entityIdentifier = entity.GetComponentInChildren<EntityIdentifier>();
-
-            BEHAVIOUR behaviour = entity.gameObject.AddComponent<BEHAVIOUR>();
-
-            ((IInitializeIdentifier)behaviour).InitializeIdentifier(entityIdentifier);
-
-            // init instancee
-            ((IInitializeInstance)behaviour).InitializeInstance(entityIdentifier);
-
-            // query instance dependencies
-            if (behaviour is IQueryInstance query)
-            {
-                query.QueryInstance();
-            }
-
-            return behaviour;
-        }
-
-        #endregion
-
-        #region remove
-        public void RemoveEntity(GameObject entity)
-        {
-            EntityIdentifier id = entity.GetComponentInChildren<EntityIdentifier>();
-            Assert.IsNotNull(id);
-
-            id.TriggerRemoved();
-        }
-        #endregion
     }
 }

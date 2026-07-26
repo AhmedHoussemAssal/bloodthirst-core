@@ -13,6 +13,7 @@ using Sirenix.Serialization;
 using System.Diagnostics;
 using Sirenix.Serialization.Utilities;
 using System.IO;
+using UnityEngine.Pool;
 
 namespace Bloodthirst.Runtime.BNodeTree
 {
@@ -85,16 +86,14 @@ namespace Bloodthirst.Runtime.BNodeTree
             return SerializationUtility.DeserializeValue<T>(mem, DataFormat.Binary, unityObjects, cache2);
         }
 
-        /// <summary>
-        /// Create a copy of the node tree structure
-        /// </summary>
-        /// <returns></returns>
-        public IEnumerable<TNode> BuildAllNodes<TNode>() where TNode : INodeType
+        public void BuildAllNodes<TNode>(List<TNode> allNodes) where TNode : INodeType
         {
             Assert.IsTrue(TypeUtils.IsSubTypeOf(NodeBaseType, typeof(TNode)), $"You're trying to get a node structure of type {NodeBaseType.Name} as use it as {typeof(TNode).Name}");
 
-            // get the nodes
-            List<TNode> allNodes = new List<TNode>();
+            if (allNodes.Capacity < Nodes.Count)
+            {
+                allNodes.Capacity = Nodes.Count;
+            }
 
             // copy the nodes
             foreach (NodeData n in Nodes)
@@ -148,9 +147,25 @@ namespace Bloodthirst.Runtime.BNodeTree
                 toPort.LinkAttached.Add(link);
             }
 
-            foreach (TNode n in allNodes)
+        }
+
+        /// <summary>
+        /// Create a copy of the node tree structure
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<TNode> BuildAllNodes<TNode>() where TNode : INodeType
+        {
+            Assert.IsTrue(TypeUtils.IsSubTypeOf(NodeBaseType, typeof(TNode)), $"You're trying to get a node structure of type {NodeBaseType.Name} as use it as {typeof(TNode).Name}");
+
+            // get the nodes
+            using (ListPool<TNode>.Get(out var allNodes))
             {
-                yield return n;
+                BuildAllNodes(allNodes);
+
+                foreach (TNode n in allNodes)
+                {
+                    yield return n;
+                }
             }
         }
     }

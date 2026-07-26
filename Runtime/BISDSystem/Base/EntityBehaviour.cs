@@ -142,23 +142,23 @@ namespace Bloodthirst.Core.BISDSystem
                 return;
             }
 
-            // in case state or istance isn't serializable
+            // in case state or instance isn't serializable
             // create new ones
             if (Instance == null)
             {
+                INSTANCE defaultInstance = new INSTANCE{};
                 STATE state = new STATE();
                 state.Data = TagData;
                 state.InitDefaultState();
 
-                INSTANCE defaultInstance = new INSTANCE
-                {
-                    State = state
-                };
+                defaultInstance.State = state;
 
                 Instance = defaultInstance;
                 return;
             }
 
+            // if the state is null 
+            // create one
             if (State == null)
             {
                 STATE state = new STATE();

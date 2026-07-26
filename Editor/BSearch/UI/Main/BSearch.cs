@@ -12,6 +12,7 @@ using System.Text;
 using UnityEngine.SceneManagement;
 using UnityEditor.SceneManagement;
 using UnityEngine.Pool;
+using UnityEditor.SceneTemplate;
 
 namespace Bloodthirst.Editor.BSearch
 {
@@ -214,7 +215,7 @@ namespace Bloodthirst.Editor.BSearch
 
             if (ScriptableObjects.value)
             {
-                List<object> objs = EditorUtils.FindAssetsByType<ScriptableObject>().Cast<object>().ToList();
+                List<object> objs = EditorUtils.FindAssetsByType<ScriptableObject>().Where(s => !(s is SceneTemplateAsset)).Cast<object>().ToList();
                 List<List<ResultPath>> res = CurrentSearchFilter.GetSearchResults(objs);
 
                 results.AddRange(res);

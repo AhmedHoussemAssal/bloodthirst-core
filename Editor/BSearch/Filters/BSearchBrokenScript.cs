@@ -9,83 +9,26 @@ using System.Reflection;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.Pool;
 using UnityEngine.SceneManagement;
 
 namespace Bloodthirst.Editor.BSearch
 {
-    [BSearchFilterName("Unity Object")]
-    public class BSearchUnityObject : IBSearchFilter
+
+    [BSearchFilterName("Broken Scripts")]
+    public class BSearchBrokenScript : IBSearchFilter
     {
         [BInspectorIgnore]
         public event Action<IBSearchFilter> OnFilterChanged;
 
-        [BInspectorIgnore]
-        private UnityEngine.Object _value;
-
-        public bool ClosestUnityObjectParent { get; set; }
-        public bool RemoveValueFromRootList { get; set; }
-
-        public UnityEngine.Object Value
-        {
-            get => _value;
-            set
-            {
-                if (_value == value)
-                    return;
-
-                _value = value;
-                OnFilterChanged?.Invoke(this);
-            }
-        }
-
         bool IBSearchFilter.IsValid()
         {
-            return Value != null;
+            return true;
         }
+
         List<List<ResultPath>> IBSearchFilter.GetSearchResults(IEnumerable<object> rootItems)
         {
-            return SearchByValue(IsEqual, rootItems);
-        }
-        private bool IsEqual(object instance)
-        {
-            GameObject instanceGO = null;
-            GameObject valueGO = null;
-
-            if (instance is GameObject)
-            {
-                instanceGO = (GameObject)instance;
-            }
-
-            if (Value is GameObject)
-            {
-                valueGO = (GameObject)Value;
-            }
-            // if it's a scene or a scriptableObject
-            // then we do normal comaprisson
-            if (valueGO == null)
-            {
-#pragma warning disable CS0253 // Possible unintended reference comparison; right hand side needs cast
-                return Value == instance;
-#pragma warning restore CS0253 // Possible unintended reference comparison; right hand side needs cast
-            }
-
-            if (instanceGO == null)
-            {
-#pragma warning disable CS0253 // Possible unintended reference comparison; right hand side needs cast
-                return Value == instance;
-#pragma warning restore CS0253 // Possible unintended reference comparison; right hand side needs cast
-            }
-
-            if (PrefabUtility.IsAnyPrefabInstanceRoot(valueGO))
-            {
-                valueGO = PrefabUtility.GetCorrespondingObjectFromSource(valueGO);
-            }
-            if (PrefabUtility.IsAnyPrefabInstanceRoot(instanceGO))
-            {
-                instanceGO = PrefabUtility.GetCorrespondingObjectFromSource(instanceGO);
-            }
-
-            return valueGO == instanceGO;
+            return SearchByValue(rootItems);
         }
 
         #region field filters
@@ -169,17 +112,13 @@ namespace Bloodthirst.Editor.BSearch
             return instance.ToString();
         }
 
-        public List<List<ResultPath>> SearchByValue(Predicate<object> condition, IEnumerable<object> rootItems)
+        public List<List<ResultPath>> SearchByValue(IEnumerable<object> rootItems)
         {
             HashSet<object> searchedCache = new HashSet<object>();
             List<List<ResultPath>> results = new List<List<ResultPath>>();
 
             List<object> rootCpy = rootItems.ToList();
 
-            if (RemoveValueFromRootList)
-            {
-                rootCpy.Remove(Value);
-            }
 
             foreach (object root in rootCpy)
             {
@@ -189,7 +128,7 @@ namespace Bloodthirst.Editor.BSearch
                 string name = RootName(root);
 
                 curr.Add(new ResultPath() { ValueName = name, ValuePath = fieldType, Value = root });
-                RecursiveSearch(condition, root, rootCpy, searchedCache, curr, results);
+                RecursiveSearch(root, rootCpy, searchedCache, curr, results);
             }
 
             foreach (List<ResultPath> l in results)
@@ -197,49 +136,29 @@ namespace Bloodthirst.Editor.BSearch
                 l.Reverse();
             }
 
-            if (results.Count == 0 || !ClosestUnityObjectParent)
-                return results;
-
-            // organize in tree
-            TreeList<object, ResultPath> tree = new TreeList<object, ResultPath>();
-
-            foreach (List<ResultPath> l in results)
-            {
-                List<object> keys = new List<object>(l.Count);
-
-                // put the items in reverse
-                // starting from the thing we're looking for
-                // and back to the root
-                for (int i = 0; i < l.Count; i++)
-                {
-                    ResultPath path = l[i];
-                    keys.Add(path.Value);
-                }
-
-                tree.GetOrCreateLeaf(keys);
-
-                for (int i = 0; i < l.Count; i++)
-                {
-                    ResultPath path = l[i];
-                    tree.LookForKey(path.Value, out TreeLeafInfo<object, ResultPath> info);
-                    info.TreeLeaf.Value = path;
-                }
-            }
-
-            TreeLeaf<object, ResultPath> firstLeaf = tree.AllSubLeafs[0];
-
             List<List<ResultPath>> cleanResults = new List<List<ResultPath>>();
-
-            // simplify to only give the best matches
-            foreach (TreeLeaf<object, ResultPath> l in firstLeaf.SubLeafs)
+            
+            using (DictionaryPool<object, List<ResultPath>>.Get(out var shortestPathLookup))
             {
-                ResultPath path = l.Value;
+                foreach(List<ResultPath> p in results)
+                {
+                    ResultPath leafObject = p[0];
+                    object key = leafObject.Value;
 
-                List<ResultPath> curr = new List<ResultPath>() { firstLeaf.Value, path };
+                    if(!shortestPathLookup.TryGetValue(key , out var currentShortest))
+                    {
+                        shortestPathLookup.Add(key, p);
+                        currentShortest = p;
+                    }
 
-                RecrusiveClean(l, curr, cleanResults);
+                    if(p.Count < currentShortest.Count)
+                    {
+                        shortestPathLookup[key] = p;
+                    }
+                }
+
+                cleanResults.AddRange(shortestPathLookup.Values);
             }
-
 
             return cleanResults;
         }
@@ -259,7 +178,7 @@ namespace Bloodthirst.Editor.BSearch
                 RecrusiveClean(l, curr, results);
             }
         }
-        private void RecursiveSearch(Predicate<object> condition, object searchTarget, List<object> rootList, HashSet<object> searchedCache, List<ResultPath> currentPath, List<List<ResultPath>> allResults)
+        private void RecursiveSearch(object searchTarget, List<object> rootList, HashSet<object> searchedCache, List<ResultPath> currentPath, List<List<ResultPath>> allResults)
         {
             // if the current instance exists as a root
             // and we found it while starting form another object
@@ -276,26 +195,12 @@ namespace Bloodthirst.Editor.BSearch
                 isCached = !searchedCache.Add(searchTarget);
             }
 
-            if (condition(searchTarget))
-            {
-                allResults.Add(currentPath);
-            }
+            if (isCached) { return; }
 
-            if (isCached)
-            {
-                return;
-            }
-
-            if (isNull)
-            {
-                return;
-            }
+            if (isNull) { return; }
 
             // if primitive
-            if (TypeUtils.PrimitiveTypes.Contains(searchTarget.GetType()))
-            {
-                return;
-            }
+            if (TypeUtils.PrimitiveTypes.Contains(searchTarget.GetType())) { return; }
 
 
             // if unity null leave
@@ -351,7 +256,7 @@ namespace Bloodthirst.Editor.BSearch
                             Value = gameObject
                         };
                         path.Add(toAppend);
-                        RecursiveSearch(condition, gameObject, rootList, searchedCache, path, allResults);
+                        RecursiveSearch(gameObject, rootList, searchedCache, path, allResults);
                     }
                 }
             }
@@ -367,17 +272,23 @@ namespace Bloodthirst.Editor.BSearch
 
                     if (c == null)
                     {
-                        Debug.Log($"Found broken script reference at {GameObjectUtils.GetGameObjectScenePath(go)}", go);
+                        allResults.Add(path);
                         continue;
                     }
-                    ResultPath toAppend = new ResultPath()
+                    else
                     {
-                        ValueName = c.GetType().Name,
-                        ValuePath = FieldType.COMPONENT,
-                        Value = c
-                    };
-                    path.Add(toAppend);
-                    RecursiveSearch(condition, c, rootList, searchedCache, path, allResults);
+                        ResultPath toAppend = new ResultPath()
+                        {   
+                            ValueName = c.GetType().Name,
+                            ValuePath = FieldType.COMPONENT,
+                            Value = c
+                        };
+
+                        path.Add(toAppend);
+                    }
+
+
+                    RecursiveSearch(c, rootList, searchedCache, path, allResults);
                 }
 
                 // child transforms
@@ -397,7 +308,7 @@ namespace Bloodthirst.Editor.BSearch
 
                     path.Add(toAppend);
 
-                    RecursiveSearch(condition, curr.gameObject, rootList, searchedCache, path, allResults);
+                    RecursiveSearch(curr.gameObject, rootList, searchedCache, path, allResults);
                 }
 
                 return;
@@ -424,7 +335,7 @@ namespace Bloodthirst.Editor.BSearch
 
                     path.Add(toAppend);
 
-                    RecursiveSearch(condition, val, rootList, searchedCache, path, allResults);
+                    RecursiveSearch(val, rootList, searchedCache, path, allResults);
                 }
             }
 
@@ -447,11 +358,10 @@ namespace Bloodthirst.Editor.BSearch
 
                     path.Add(toAppend);
 
-                    RecursiveSearch(condition, val, rootList, searchedCache, path, allResults);
+                    RecursiveSearch(val, rootList, searchedCache, path, allResults);
                 }
 
-                if (val == null)
-                    return;
+                if (val == null) { continue; }
 
                 // check the elements of the collection
                 {
@@ -472,7 +382,7 @@ namespace Bloodthirst.Editor.BSearch
 
                         path.Add(toAppend);
 
-                        RecursiveSearch(condition, elem, rootList, searchedCache, path, allResults);
+                        RecursiveSearch(elem, rootList, searchedCache, path, allResults);
                         i++;
                     }
                 }

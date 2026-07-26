@@ -1,5 +1,6 @@
 ﻿using Bloodthirst.Core.Utils;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Pool;
@@ -12,6 +13,19 @@ namespace Bloodthirst.Scripts.Utils
         {
             public Vector2 position;
             public int index;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2 RotateByAngle(Vector2 vec , float angleInDeg)
+        {
+            float angle = angleInDeg * Mathf.Deg2Rad;
+            float s = Mathf.Sin(angle);
+            float c = Mathf.Cos(angle);
+
+            return new Vector2(
+                vec.x * c - vec.y * s,
+                vec.x * s + vec.y * c
+            );
         }
 
         public static float GetLineLength(IReadOnlyList<Vector3> points)
@@ -90,11 +104,13 @@ namespace Bloodthirst.Scripts.Utils
             });
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 To3D(this Vector2 vec2)
         {
             return new Vector3(vec2.x, 0, vec2.y);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 To2D(this Vector3 vec3)
         {
             return new Vector2(vec3.x, vec3.z);

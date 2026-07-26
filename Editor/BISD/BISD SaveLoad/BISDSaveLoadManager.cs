@@ -24,6 +24,7 @@ namespace Bloodthirst.Core.BISD.Editor
         private event Action OnSettingsChanged;
 
         private VisualElement root;
+        private SaveLoadManager saveLoadManager;
 
         private VisualElement Root => root;
 
@@ -41,7 +42,6 @@ namespace Bloodthirst.Core.BISD.Editor
             if (!EditorConsts.ON_ASSEMBLY_RELOAD_BISD_SAVE_MANAGER)
                 return;
 #endif
-            SaveLoadManager.Initialize();
         }
 
 
@@ -107,7 +107,7 @@ namespace Bloodthirst.Core.BISD.Editor
             data.Title = titleTxt.value;
             data.GameDatas = new List<SavedEntityEntry>();
 
-            SaveLoadManager.SaveRuntimeState(data.GameDatas);
+            saveLoadManager.SaveRuntimeState(data.GameDatas);
 
             AssetDatabase.CreateAsset(data, selectPathTxt.value);
 
@@ -139,12 +139,16 @@ namespace Bloodthirst.Core.BISD.Editor
             VisualTreeAsset visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(PATH_UXML);
             VisualElement uxml = visualTree.Instantiate();
 
+
             // A stylesheet can be added to a VisualElement.
             // The style will be applied to the VisualElement and all of its children.
             StyleSheet styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(PATH_USS);
             uxml.styleSheets.Add(EditorConsts.GlobalStyleSheet);
             uxml.styleSheets.Add(styleSheet);
             root.Add(uxml);
+
+            saveLoadManager = new SaveLoadManager();
+            saveLoadManager.Initialize();
         }
     }
 }
