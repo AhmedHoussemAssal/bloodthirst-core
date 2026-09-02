@@ -245,6 +245,12 @@ namespace Bloodthirst.Core.Utils
             }
         }
 
+        public static void MoveToGameplayScene(GameObject go)
+        {
+            Scene scene = SceneManager.GetSceneByName("Gameplay");
+            Assert.IsTrue(scene.IsValid() && scene.isLoaded); 
+            SceneManager.MoveGameObjectToScene(go, scene);
+        }
         public static void MoveToScene(GameObject go, Scene scene)
         {
             SceneManager.MoveGameObjectToScene(go, scene);

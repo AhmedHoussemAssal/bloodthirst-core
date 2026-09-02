@@ -7,26 +7,6 @@ namespace Bloodthirst.Editor.CustomComponent
 {
     public class TabUI : VisualElement
     {
-        public new class UxmlFactory : UxmlFactory<TabUI, UxmlTraits> { }
-        public new class UxmlTraits : VisualElement.UxmlTraits
-        {
-            UxmlChildElementDescription allowedChildren = new UxmlChildElementDescription(typeof(TabElement));
-            public override IEnumerable<UxmlChildElementDescription> uxmlChildElementsDescription
-            {
-                get 
-                {
-                    yield return allowedChildren; 
-                }
-            }
-
-            public override void Init(VisualElement ve, IUxmlAttributes bag, CreationContext cc)
-            {
-                base.Init(ve, bag, cc);
-                TabUI tab = ve as TabUI;
-                tab.CheckForTabs();
-            }
-        }
-
         private const string UXML_PATH = "Packages/com.bloodthirst.bloodthirst-core/Editor/CustomUIToolkit.Editor/TabUI/TabUI.uxml";
         private const string USS_PATH = "Packages/com.bloodthirst.bloodthirst-core/Editor/CustomUIToolkit.Editor/TabUI/TabUI.uss";
 

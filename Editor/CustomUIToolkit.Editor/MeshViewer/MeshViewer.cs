@@ -15,20 +15,6 @@ namespace Bloodthirst.Editor.CustomComponent
     /// </summary>
     public class MeshViewer : VisualElement
     {
-        public new class UxmlFactory : UxmlFactory<MeshViewer, UxmlTraits> { }
-
-        public new class UxmlTraits : VisualElement.UxmlTraits
-        {
-            public override IEnumerable<UxmlChildElementDescription> uxmlChildElementsDescription
-            {
-                get { yield break; }
-            }
-
-            public override void Init(VisualElement ve, IUxmlAttributes bag, CreationContext cc)
-            {
-                base.Init(ve, bag, cc);
-            }
-        }
 
         private const string BASE_PATH = "Packages/com.bloodthirst.bloodthirst-core/Editor/CustomUIToolkit.Editor/" + nameof(MeshViewer);
         private const string UXML_PATH = BASE_PATH + "/" + nameof(MeshViewer) + ".uxml";

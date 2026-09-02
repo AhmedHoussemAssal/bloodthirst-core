@@ -730,9 +730,9 @@ namespace Bloodthirst.Editor.BNodeTree
 
 
         [OnOpenAsset]
-        public static bool Open(int instanceID, int line)
+        public static bool Open(EntityId instanceID, int line)
         {
-            UnityEngine.Object obj = EditorUtility.InstanceIDToObject(instanceID);
+            UnityEngine.Object obj = EditorUtility.EntityIdToObject(instanceID);
 
             if (!(obj is NodeTreeData data))
                 return false;

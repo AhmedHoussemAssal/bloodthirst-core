@@ -18,26 +18,6 @@ namespace Bloodthirst.Core.BProvider.Editor
             InterfaceSingletons,
             InterfaceInstances,
         }
-        public new class UxmlFactory : UxmlFactory<BProviderBrowseView, UxmlTraits> { }
-        public new class UxmlTraits : VisualElement.UxmlTraits
-        {
-            UxmlEnumAttributeDescription<BrowseType> browseType = new UxmlEnumAttributeDescription<BrowseType> { name = "browse-type", defaultValue = BrowseType.ClassInstances };
-
-            public override IEnumerable<UxmlChildElementDescription> uxmlChildElementsDescription
-            {
-                get { yield break; }
-            }
-
-            public override void Init(VisualElement ve, IUxmlAttributes bag, CreationContext cc)
-            {
-                base.Init(ve, bag, cc);
-                BProviderBrowseView providerBrowseView = ve as BProviderBrowseView;
-
-                BrowseType val = browseType.GetValueFromBag(bag, cc);
-
-                providerBrowseView.Type = val;
-            }
-        }
 
         private const string UXML_PATH = BProviderEditor.FOLDER_PATH + "Views/BrowseView/BProviderBrowseView.uxml";
         private const string USS_PATH = BProviderEditor.FOLDER_PATH + "Views/BrowseView/BProviderBrowseView.uss";

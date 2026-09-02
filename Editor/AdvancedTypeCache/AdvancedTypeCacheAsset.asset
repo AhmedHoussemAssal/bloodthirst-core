@@ -23,12 +23,10 @@ MonoBehaviour:
     SerializationNodes:
     - Name: cache
       Entry: 7
-      Data: 0|System.Collections.Generic.Dictionary`2[[System.Type, mscorlib],[Bloodthirst.Core.Utils.AdvancedTypeCache+TypeInformation,
-        AdvancedTypeCache.Editor]], mscorlib
+      Data: 0|System.Collections.Generic.Dictionary`2[[System.Type, mscorlib],[Bloodthirst.Core.Utils.AdvancedTypeCache+TypeInformation, AdvancedTypeCache.Editor]], mscorlib
     - Name: comparer
       Entry: 7
-      Data: 1|System.Collections.Generic.ObjectEqualityComparer`1[[System.Type, mscorlib]],
-        mscorlib
+      Data: 1|System.Collections.Generic.ObjectEqualityComparer`1[[System.Type, mscorlib]], mscorlib
     - Name: 
       Entry: 8
       Data: 

@@ -43,7 +43,7 @@ namespace Bloodthirst.Utils.EditorOpenTracker
                 if(evtType == ObjectChangeKind.ChangeGameObjectParent)
                 {
                     stream.GetChangeGameObjectParentEvent(i, out ChangeGameObjectParentEventArgs data);
-                    GameObject go = (GameObject)EditorUtility.InstanceIDToObject(data.instanceId);
+                    GameObject go = (GameObject)EditorUtility.EntityIdToObject(data.entityId);
 
                     for (int j = 0; j < gameObjectAddedHandlers.Length; j++)
                     {
@@ -54,12 +54,12 @@ namespace Bloodthirst.Utils.EditorOpenTracker
                 if(evtType == ObjectChangeKind.ChangeGameObjectStructureHierarchy)
                 {
                     stream.GetChangeGameObjectStructureHierarchyEvent(i, out ChangeGameObjectStructureHierarchyEventArgs data);
-                    GameObject go = (GameObject)EditorUtility.InstanceIDToObject(data.instanceId);
+                    GameObject go = (GameObject)EditorUtility.EntityIdToObject(data.entityId);
                 }
                 if(evtType == ObjectChangeKind.CreateGameObjectHierarchy)
                 {
                     stream.GetCreateGameObjectHierarchyEvent(i, out CreateGameObjectHierarchyEventArgs data);
-                    GameObject go = (GameObject) EditorUtility.InstanceIDToObject(data.instanceId);
+                    GameObject go = (GameObject) EditorUtility.EntityIdToObject(data.entityId);
 
                 }
             }

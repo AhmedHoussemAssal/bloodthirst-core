@@ -4,6 +4,8 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.Assertions;
+using System;
+
 
 
 #if UNITY_EDITOR
@@ -12,6 +14,7 @@ using UnityEditor;
 
 namespace Bloodthirst.Core.AdvancedPool
 {
+    [Serializable]
     public struct GlobalPoolEntry
     {
         public GameObject Prefab;

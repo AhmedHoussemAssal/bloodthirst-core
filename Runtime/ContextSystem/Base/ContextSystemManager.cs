@@ -1,6 +1,8 @@
 ﻿using Bloodthirst.Core.PersistantAsset;
 #if ODIN_INSPECTOR
 	using Sirenix.OdinInspector;
+using Sirenix.Serialization;
+
 #endif
 using System;
 using System.Collections.Generic;
@@ -13,9 +15,10 @@ using UnityEngine;
 namespace Bloodthirst.System.ContextSystem
 {
     public class ContextSystemManager : SingletonScriptableObject<ContextSystemManager>
-    {
-        [SerializeField]
-        #if ODIN_INSPECTOR[ReadOnly]#endif
+    {#if ODIN_INSPECTOR
+        [OdinSerialize]
+        [ShowInInspector]
+        [ReadOnly]#endif
         private List<IContextInstance> allContextInstance;
 
         public IReadOnlyList<IContextInstance> AllContextInstance => allContextInstance;

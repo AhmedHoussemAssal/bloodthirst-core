@@ -33,9 +33,9 @@ namespace Bloodthirst.Editor.BRecorder
         }
 
         [OnOpenAsset(OnOpenAssetAttributeMode.Execute)]
-        public static bool HandleOpenAsset(int instanceID, int line)
+        public static bool HandleOpenAsset(EntityId instanceID, int line)
         {
-            UnityEngine.Object asset = EditorUtility.InstanceIDToObject(instanceID);
+            UnityEngine.Object asset = EditorUtility.EntityIdToObject(instanceID);
 
             if (!(asset is BRecorderAsset rec))
                 return false;

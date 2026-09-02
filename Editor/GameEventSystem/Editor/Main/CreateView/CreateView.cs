@@ -15,21 +15,6 @@ namespace Bloodthirst.Core.GameEventSystem
 {
     public class CreateView : VisualElement
     {
-        public new class UxmlFactory : UxmlFactory<CreateView, UxmlTraits> { }
-        public new class UxmlTraits : VisualElement.UxmlTraits
-        {
-            public override IEnumerable<UxmlChildElementDescription> uxmlChildElementsDescription
-            {
-                get { yield break; }
-            }
-
-            public override void Init(VisualElement ve, IUxmlAttributes bag, CreationContext cc)
-            {
-                base.Init(ve, bag, cc);
-                CreateView ate = ve as CreateView;
-            }
-        }
-
         private const string UXML_PATH = "Packages/com.bloodthirst.bloodthirst-core/Editor/GameEventSystem/Editor/Main/CreateView/CreateView.uxml";
         private const string USS_PATH = "Packages/com.bloodthirst.bloodthirst-core/Editor/GameEventSystem/Editor/Main/CreateView/CreateView.uss";
 

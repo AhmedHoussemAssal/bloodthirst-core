@@ -7,6 +7,7 @@ using UnityEditorInternal;
 #endif
 using UnityEngine;
 using System.Collections.Generic;
+using System;
 
 namespace Bloodthirst.Core.GameEventSystem
 {
@@ -16,6 +17,7 @@ namespace Bloodthirst.Core.GameEventSystem
     public class GameEventSystemAsset : ScriptableObject
 #endif
     {
+        [Serializable]
         public struct EnumClassPair
         {
 

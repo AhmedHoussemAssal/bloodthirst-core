@@ -1,9 +1,11 @@
+using Unity.Scripting.LifecycleManagement;
 using UnityEngine.Assertions;
 
 namespace Bloodthirst.Core.BProvider
 {
-    public class BProviderRuntime
+    public partial class BProviderRuntime
     {
+        [AutoStaticsCleanup]
         private static BProvider instance;
 
         public static void OverrideProvider(BProvider provider)
